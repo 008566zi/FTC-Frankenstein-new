@@ -1,11 +1,12 @@
 
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.C_Bot;
+
+import static org.firstinspires.ftc.teamcode.C_Bot.C_TWB.GEARDOWNTIME;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.C_TWB;
 import org.firstinspires.ftc.teamcode.TWBMove;
 
 /**
@@ -35,7 +36,7 @@ public class C_back_n_forth_Auto extends OpMode {
     public void init() {
         twb = new C_TWB(hardwareMap); // Create twb object
 
-        twb.writeLog("CLogAutoBnF");
+        twb.writeDatalog("CLogAutoBnF");
 
         twb.moveGearDown();
     }
@@ -114,7 +115,7 @@ public class C_back_n_forth_Auto extends OpMode {
             case GEARDOWN:
                 if (moveTimer.seconds() <= 0.05)
                     twb.moveGearDown();
-                else if (moveTimer.seconds() > 0.4)
+                else if (moveTimer.seconds() > GEARDOWNTIME)
                     requestOpModeStop();
                 break;
         }

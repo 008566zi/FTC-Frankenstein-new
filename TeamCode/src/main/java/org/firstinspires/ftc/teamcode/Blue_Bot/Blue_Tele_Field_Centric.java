@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.Blue_Bot;
 
 import android.annotation.SuppressLint;
 
@@ -7,7 +7,6 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Angles;
-import org.firstinspires.ftc.teamcode.BlueWheelTWB;
 import org.firstinspires.ftc.teamcode.RunningAverageArray;
 
 /**
@@ -104,11 +103,11 @@ public class Blue_Tele_Field_Centric extends OpMode
         twb.claw_teleop(gamepad1.rightBumperWasPressed());
 
         if (gamepad1.yWasPressed()) {
-            twb.imuReset();
+            //twb.imuReset();
             // NOT WORKING IF YAW ANGLE IS GREATER THAN 180 OR -180
         }
 
-        twb.loop(this);  // call the MAIN CONTROL SYSTEM
+        twb.loopBlue(this);  // call the MAIN CONTROL SYSTEM
 
         telemetry.addLine(String.format("Yaw Target %.1f ,Current %.1f (degrees)",
                 twb.getYawTarget()*180/Math.PI,twb.getYaw()*180/Math.PI));

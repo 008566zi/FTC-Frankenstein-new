@@ -1,18 +1,13 @@
 
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.Blue_Bot;
 
 import android.annotation.SuppressLint;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.BlueWheelTWB;
-import org.firstinspires.ftc.teamcode.DatalogTWB;
-import org.firstinspires.ftc.teamcode.Datalogger;
 import org.firstinspires.ftc.teamcode.RunningAverageArray;
-import org.firstinspires.ftc.teamcode.Term;
 
 /**
  * This OpMode allows one to tune the zero pitch values for different arm angles.
@@ -89,7 +84,7 @@ public class Blue_Set_Arm_Angle_Pitch extends OpMode {
     @SuppressLint("DefaultLocale")
     public void loop() {
 
-        twb.loop(this);  // CALL MAIN TWB CONTROL SYSTEM
+        twb.loopBlue(this);  // CALL MAIN TWB CONTROL SYSTEM
 
         telemetry.addData("Pitch  FUZZ (deg)"," %.1f", pitchFuzz);
 

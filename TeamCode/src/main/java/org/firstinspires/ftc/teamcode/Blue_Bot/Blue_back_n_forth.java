@@ -1,12 +1,11 @@
 
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.Blue_Bot;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.BlueWheelTWB;
 import org.firstinspires.ftc.teamcode.TWBMove;
 
 /**
@@ -120,7 +119,7 @@ public class Blue_back_n_forth extends OpMode {
                 break;
         }
 
-        twb.loop(this);  // MAIN CONTROL SYSTEM
+        twb.loopBlue(this);  // MAIN CONTROL SYSTEM
 
         telemetry.addData("State",state);
         telemetry.update();

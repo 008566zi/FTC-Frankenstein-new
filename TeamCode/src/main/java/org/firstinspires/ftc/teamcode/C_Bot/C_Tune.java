@@ -1,9 +1,8 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.C_Bot;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.C_TWB;
 import org.firstinspires.ftc.teamcode.RunningAverageArray;
 
 /**
@@ -27,7 +26,7 @@ public class C_Tune extends OpMode
     public void init() {
         twb = new C_TWB(hardwareMap); // Create twb object
 
-        twb.writeLog("CManualTune");
+        twb.writeDatalog("CManualTune");
 
         joystickS = new RunningAverageArray(12,false); // initialize size of running average
 

@@ -1,5 +1,7 @@
 
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.C_Bot;
+
+import static org.firstinspires.ftc.teamcode.C_Bot.C_TWB.GEARDOWNTIME;
 
 import android.annotation.SuppressLint;
 
@@ -7,7 +9,6 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.C_TWB;
 import org.firstinspires.ftc.teamcode.Datalogger;
 import org.firstinspires.ftc.teamcode.Term;
 
@@ -33,10 +34,8 @@ public class C_BackNForth_DOE extends OpMode {
     private double virtualJoystick = 0.0;
 
     // Modify the Terms in init()
-    private Term mmPerLoop;
-    private Term degPerLoop;
-    //private Term UNUSED1;
-    //private Term UNUSED2;
+    private Term term1;  // generic names.  specific tests terms defined below
+    private Term term2;
 
     // Internal variables
     private int count = 1; // for counting the DOE
@@ -55,14 +54,13 @@ public class C_BackNForth_DOE extends OpMode {
         // Load "terms" log into a spreadsheet, filter, and sort for the lowest score.
         datalogEXP = new DatalogEXP("C_DOE_bnf");
 
-        twb.writeLog("C_DOE_bnf_Full"); // This log will be bigger
+        twb.writeDatalog("C_DOE_bnf_Full"); // This log will be bigger
 
         // MODIFY THESE FOR THE EXPERIMENTS.
-        mmPerLoop = new Term(3.0,4.0,5,twb.getKpos());
-        //UNUSED1 = new Term(-0.0022,-0.0022,1,twb.getKvelo());
-        degPerLoop = new Term(-1.0,0.0,5,twb.getKpitch());
-        //UNUSED2 = new Term(-0.0044,-0.0043,1,twb.getKpitchRate());
-        NEXPERIMENTS = mmPerLoop.getN() * degPerLoop.getN();
+        term1 = new Term(-0.012,-.008,5,twb.getKpos());  // Kpos
+        term2 = new Term(-0.0028,-0.0023,5,twb.getKvelo()); // Kvelo
+
+        NEXPERIMENTS = term1.getN() * term2.getN();
 
         twb.init();
     }
@@ -73,9 +71,10 @@ public class C_BackNForth_DOE extends OpMode {
      */
     @Override
     public void init_loop() {
-        telemetry.addLine("DOE to determine MM_Per_Loop and DEG_Per_Loop");
+        telemetry.addLine("BACK AND FORTH DOE");
+        telemetry.addLine(String.format(Locale.US, "  Will move %.1f mm",DISTANCE));
         telemetry.addLine(String.format(Locale.US, "TOTAL EXPERIMENTS %d",NEXPERIMENTS));
-        telemetry.addLine(String.format(Locale.US, "TOTAL TIME %.2f",NEXPERIMENTS*testDuration));
+        telemetry.addLine(String.format(Locale.US, "TOTAL TIME %.2f sec",NEXPERIMENTS*testDuration));
 
         twb.init_loop();
 
@@ -88,6 +87,9 @@ public class C_BackNForth_DOE extends OpMode {
     @Override
     public void start() {
         twb.start();
+
+        twb.setMMPLoop(3.0);  // sets the max velocity
+
         resetRuntime();
         moveTimer.reset();
     }
@@ -100,8 +102,11 @@ public class C_BackNForth_DOE extends OpMode {
     public void loop() {
         if (moveTimer.seconds() < 0.03) {
             // set the new DOE K terms
-            twb.setMMPLoop(mmPerLoop.getCurrent());
-            twb.setDEGPLoop(degPerLoop.getCurrent());
+            twb.setKpos(term1.getCurrent());
+            twb.setKvelo(term2.getCurrent());
+
+            //twb.setMMPLoop(term1.getCurrent());
+            //twb.setDEGPLoop(term2.getCurrent());
 
             if (forward) {
                 virtualJoystick = -1.0;
@@ -116,14 +121,14 @@ public class C_BackNForth_DOE extends OpMode {
             double thisDT = twb.getDeltaTime();
 
             // build the minimum amplitude "box" on the position wave
-            mmPerLoop.updateMinMax(thisPos);
+            term1.updateMinMax(thisPos);
 
             // build the minimum amplitude "box" on the pitch wave
-            degPerLoop.updateMinMax(thisPitch);
+            term2.updateMinMax(thisPitch);
 
             // Integrate the position and pitch errors over time
-            mmPerLoop.updateSum(thisPos, twb.getPosTarget(), thisDT);
-            degPerLoop.updateSum(thisPitch, twb.getPitchTarget(), thisDT);
+            term1.updateSum(thisPos, twb.getPosTarget(), thisDT);
+            term2.updateSum(thisPitch, twb.getPitchTarget(), thisDT);
 
             // turn off the virtual joystick when distance is reached
             if (forward && twb.getPos() >= DISTANCE) virtualJoystick = 0.0;
@@ -134,33 +139,21 @@ public class C_BackNForth_DOE extends OpMode {
             // At the end of the experiment, only once, log data and do resets
 
             // datalog - one line for each experiment
-            // count, KPIT, KPOS (the inputs)
             datalogEXP.count.set(count);
-            datalogEXP.MMPerLoop.set(mmPerLoop.getCurrent());
-            datalogEXP.DEGPerLoop.set(degPerLoop.getCurrent());
-            // min, max and amplitudes (the results)
-//            datalogEXP.minPos.set(mmPerLoop.getMin());
-//            datalogEXP.maxPos.set(mmPerLoop.getMax());
-//            double ampPos = mmPerLoop.getMax() - mmPerLoop.getMin();
-//            datalogEXP.ampPos.set(ampPos);
-//            double AvgPos = (mmPerLoop.getMin() + mmPerLoop.getMax())/2.0;
-//            datalogEXP.AvgPos.set(AvgPos);
-            datalogEXP.PosError.set(mmPerLoop.getSum());
-//            datalogEXP.minPitch.set(degPerLoop.getMin());
-//            datalogEXP.maxPitch.set(degPerLoop.getMax());
-//            double ampPitch = degPerLoop.getMax() - degPerLoop.getMin();
-//            datalogEXP.ampPitch.set(ampPitch);
-            datalogEXP.PitchError.set(degPerLoop.getSum());
-            //datalogEXP.score.set(ampPitch*4.0+ampPos+Math.abs(AvgPos)); // low score wins!
-            //datalogEXP.score.set(16.0* degPerLoop.getSum() + mmPerLoop.getSum()); // low score wins!
+            datalogEXP.term1.set(term1.getCurrent());
+            datalogEXP.term2.set(term2.getCurrent());
+
+            datalogEXP.PosError.set(term1.getSum());
+
+            datalogEXP.PitchError.set(term2.getSum());
 
             // The logged timestamp is taken when writeLine() is called.
             datalogEXP.writeLine();
 
             // set up for the next experiment
-            mmPerLoop.next();
-            if(count % mmPerLoop.getN() == 0) {
-                degPerLoop.next();
+            term1.next();
+            if(count % term1.getN() == 0) {
+                term2.next();
             }
 
             moveTimer.reset();
@@ -168,31 +161,31 @@ public class C_BackNForth_DOE extends OpMode {
 
             count += 1;
 
-            mmPerLoop.resetMinMax();
-            degPerLoop.resetMinMax();
-            mmPerLoop.resetSum();
-            degPerLoop.resetSum();
+            term1.resetMinMax();
+            term2.resetMinMax();
+            term1.resetSum();
+            term2.resetSum();
         }
-        // Translate the robot by setting position, velocity and pitch targets
-        twb.translateDrive(virtualJoystick,mmPerLoop.getCurrent(),degPerLoop.getCurrent());
+        // Translate the robot
+        twb.translateDrive(virtualJoystick,twb.getMMPLoop(),twb.getDEGPLoop());
 
         twb.loopC(this);  // CALL MAIN TWB CONTROL SYSTEM
 
         telemetry.addLine(String.format("EXPERIMENT %d  OF TOTAL %d",count, NEXPERIMENTS));
         telemetry.addLine(" --- ");
 
-        telemetry.addData("mmPerLoop","%.2f", mmPerLoop.getCurrent());
+        telemetry.addData("term1","%.5f", term1.getCurrent());
         //telemetry.addData("UNUSED","%.7f", UNUSED1.getCurrent());
         telemetry.addLine(" --- ");
 
-        telemetry.addData("degPerLoop","%.2f", degPerLoop.getCurrent());
+        telemetry.addData("term2","%.5f", term2.getCurrent());
         //telemetry.addData("KpitchRate","%.7f", UNUSED2.getCurrent());
 
         telemetry.update();
 
         if (count > NEXPERIMENTS) {
             twb.moveGearDown();
-            if(moveTimer.seconds() > 0.4) requestOpModeStop(); // Stop the opmode
+            if(moveTimer.seconds() > GEARDOWNTIME) requestOpModeStop(); // Stop the opmode
         }
     }
     /**
@@ -205,21 +198,21 @@ public class C_BackNForth_DOE extends OpMode {
         // These are all of the fields that we want in the datalog.
         // Note that order here is NOT important. The order is important in the setFields() call below
         public Datalogger.GenericField count = new Datalogger.GenericField("count");
-        public Datalogger.GenericField MMPerLoop = new Datalogger.GenericField("MMPerLoop");
-        public Datalogger.GenericField DEGPerLoop = new Datalogger.GenericField("DEGPerLoop");
+        public Datalogger.GenericField term1 = new Datalogger.GenericField("term1");
+        public Datalogger.GenericField term2 = new Datalogger.GenericField("term2");
 
-        public Datalogger.GenericField minPos = new Datalogger.GenericField("minPos");
-        public Datalogger.GenericField maxPos = new Datalogger.GenericField("maxPos");
-        public Datalogger.GenericField ampPos = new Datalogger.GenericField("ampPos");
-        public Datalogger.GenericField AvgPos = new Datalogger.GenericField("AVG_Pos");
+        //public Datalogger.GenericField minPos = new Datalogger.GenericField("minPos");
+        //public Datalogger.GenericField maxPos = new Datalogger.GenericField("maxPos");
+        //public Datalogger.GenericField ampPos = new Datalogger.GenericField("ampPos");
+        //public Datalogger.GenericField AvgPos = new Datalogger.GenericField("AVG_Pos");
         public Datalogger.GenericField PosError = new Datalogger.GenericField("Pos_Error");
 
-        public Datalogger.GenericField minPitch = new Datalogger.GenericField("minPitch");
-        public Datalogger.GenericField maxPitch = new Datalogger.GenericField("maxPitch");
-        public Datalogger.GenericField ampPitch = new Datalogger.GenericField("ampPitch");
+        //public Datalogger.GenericField minPitch = new Datalogger.GenericField("minPitch");
+        //public Datalogger.GenericField maxPitch = new Datalogger.GenericField("maxPitch");
+        //public Datalogger.GenericField ampPitch = new Datalogger.GenericField("ampPitch");
         public Datalogger.GenericField PitchError = new Datalogger.GenericField("Pitch_Error");
 
-        public Datalogger.GenericField score = new Datalogger.GenericField("SCORE");
+        //public Datalogger.GenericField score = new Datalogger.GenericField("SCORE");
 
 
         public DatalogEXP(String name) {
@@ -237,18 +230,18 @@ public class C_BackNForth_DOE extends OpMode {
                     // the fields is the order in which they will appear in the log.
                     .setFields(
                             count,
-                            MMPerLoop,
-                            DEGPerLoop,
-                            minPos,
-                            maxPos,
-                            ampPos,
-                            AvgPos,
+                            term1,
+                            term2,
+                            //minPos,
+                            //maxPos,
+                            //ampPos,
+                            //AvgPos,
                             PosError,
-                            minPitch,
-                            maxPitch,
-                            ampPitch,
-                            PitchError,
-                            score
+                            //minPitch,
+                            //maxPitch,
+                            //ampPitch,
+                            PitchError
+                            //score
                     )
                     .build();
         }

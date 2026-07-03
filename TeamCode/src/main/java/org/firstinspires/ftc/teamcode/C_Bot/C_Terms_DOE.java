@@ -1,36 +1,36 @@
 
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.C_Bot;
+
+import static org.firstinspires.ftc.teamcode.C_Bot.C_TWB.GEARDOWNTIME;
 
 import android.annotation.SuppressLint;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.BlueWheelTWB;
 import org.firstinspires.ftc.teamcode.Datalogger;
-import org.firstinspires.ftc.teamcode.RunningAverageArray;
 import org.firstinspires.ftc.teamcode.Term;
 
+import java.util.Locale;
+
 /**
- * This Iterative Design of Experiments OpMode is for a Two Wheel Balancing Robot with Arm.
- * It initializes to balancing, then runs through a series of Kposition and Kpitch terms
+ * This Iterative Design of Experiments OpMode is for a Two Wheel Balancing Robot.
+ * It runs through a series of Kposition and Kpitch terms
  * with a perturbation (jiggle) to make the robot rock.
  * A datalog records the min/max of position and pitch for each test, with the
  * expectation that the lowest mix/max are the most stable terms.
  */
-@TeleOp(name="Blue Bot Terms Design of Experiments")
-@Disabled
-public class Blue_Terms_DOE extends OpMode {
+@TeleOp(name="C Bot Terms Design of Experiments")
+//@Disabled
+public class C_Terms_DOE extends OpMode {
     // Declare OpMode members.
-    private BlueWheelTWB twb;
+    private C_TWB twb;
     final private ElapsedTime moveTimer = new ElapsedTime();
 
     // DOE constants.  Modify these for the experiment
-    private final double ARMANGLE = -90.0;
-    private final double testDuration = 4.0; // seconds per experiment
-    private final double JIGGLEDEG = 9.0; // Pitch jiggle for each experiment
+    private final double testDuration = 5.0; // seconds per experiment
+    private final double JIGGLEDEG = 3.0; // Pitch jiggle for each experiment
 
     // Modify the Terms in init()
     private Term Kpos;
@@ -44,50 +44,28 @@ public class Blue_Terms_DOE extends OpMode {
 
     private DatalogEXP datalogEXP;  // data logger for experiments
 
-    private RunningAverageArray robotPos; // to provide steady position telemetry in init
-
-    private double pitchFuzz = -1.5;
-
     /**
      * Code to run ONCE when the driver hits INIT
      */
     @Override
     public void init() {
-        twb = new BlueWheelTWB(hardwareMap); // Create twb object
+        twb = new C_TWB(hardwareMap); // Create twb object
 
         // NOTE: TWO datalogs can be written!
         // Load "terms" log into a spreadsheet, filter, and sort for the lowest score.
-        datalogEXP = new DatalogEXP("BlueDOEterms");
+        datalogEXP = new DatalogEXP("C_DOEterms");
 
-        twb.writeDatalog("BlueDOEFull"); // This log will be bigger
-
-        twb.closeClaw(); // close the claw
+        twb.writeDatalog("C_DOEFull"); // This log will be bigger
 
         // MODIFY THESE FOR THE EXPERIMENTS. KPOS CHANGES WITH ARM ANGLE
-//        Kpos = new Term(0.017,0.021,3,twb.getKpos());
-//        Kvelo = new Term(0.015,0.019,3,twb.getKvelo());  // 0.020 breaks bot
-//        Kpitch = new Term(-0.61,-0.57,3,twb.getKpitch());
-//        KpitchRate = new Term(-0.028,-0.022,3,twb.getKpitchRate());
-        Kpos = new Term(0.0017493,0.001821,3,twb.getKpos());
-        Kvelo = new Term(0.001225,0.001275,3,twb.getKvelo());
-        Kpitch = new Term(-0.049419,-0.047481,3,twb.getKpitch());
-        KpitchRate = new Term(-0.002083,-0.00200116,3,twb.getKpitchRate());
+//        KpitchRate = smallest absolute value before chatter = -0.007
+        Kpos = new Term(-0.011,-0.0090,5,twb.getKpos());
+        Kvelo = new Term(-0.0022,-0.0022,1,twb.getKvelo());
+        Kpitch = new Term(-0.250,-0.210,5,twb.getKpitch());
+        KpitchRate = new Term(-0.0044,-0.0043,1,twb.getKpitchRate());
         NEXPERIMENTS = Kpos.getN() * Kpitch.getN() * Kvelo.getN() * KpitchRate.getN();
 
-        robotPos = new RunningAverageArray(100,true); // for robot position telemetry
-
-        twb.setArmAngle(ARMANGLE); // gets the latest state of the robot before running
-        /*
-        The telemetry.setMsTransmissionInterval() method in the FIRST Tech Challenge SDK controls
-        how frequently telemetry data is sent from the Robot Controller to the Driver Station
-        250 (milliseconds) is the default value and a good general-purpose interval.
-        100 to 50 (milliseconds) are useful for debugging or operations requiring faster updates.
-        A lower interval provides a more real-time view of data on the Driver Station but increases
-        communication bandwidth usage,
-         */
-        //telemetry.setMsTransmissionInterval(500);
-
-        twb.start();
+        twb.init();
     }
 
     /**
@@ -96,19 +74,11 @@ public class Blue_Terms_DOE extends OpMode {
      */
     @Override
     public void init_loop() {
-        if (gamepad1.dpadUpWasPressed()) pitchFuzz += 0.1;
-        else if (gamepad1.dpadDownWasPressed()) pitchFuzz -= 0.1;
-        twb.setAutoPitchTarget(pitchFuzz);
-
         telemetry.addLine("DOE to determine Kpos, Kvelo, Kpitch & KpitchRate");
-        telemetry.addData("ARM Angle (deg) =", ARMANGLE);
-        twb.loop(this);  // call balance control system
+        telemetry.addLine(String.format(Locale.US, "TOTAL EXPERIMENTS %d",NEXPERIMENTS));
+        telemetry.addLine(String.format(Locale.US, "TOTAL TIME %.2f",NEXPERIMENTS*testDuration));
 
-        robotPos.add(twb.getPos()); // for telemetry only
-        telemetry.addData("Robot Position (mm) (Averaged)","  %.1f", robotPos.getAverage());
-
-        telemetry.addData("Robot Pitch (deg)"," %.1f", twb.getPitch());
-        telemetry.addData("Pitch  FUZZ (deg)"," %.1f", pitchFuzz);
+        twb.init_loop();
 
         telemetry.update();
     }
@@ -118,11 +88,9 @@ public class Blue_Terms_DOE extends OpMode {
      */
     @Override
     public void start() {
-        //twb.start();
+        twb.start();
         resetRuntime();
         moveTimer.reset();
-        //Kpos.setTargetValue(0.0); // target position of the robot is zero
-        //Kpitch.setTargetValue(twb.getPitchTarget());
     }
 
     /**
@@ -139,7 +107,7 @@ public class Blue_Terms_DOE extends OpMode {
             twb.setKvelo(Kvelo.getOriginal());
             twb.setKpitchRate(KpitchRate.getOriginal());
 
-            twb.setAutoPitchTarget(JIGGLEDEG+pitchFuzz); // add JIGGLEDEG degrees initially to jiggle
+            twb.setAutoPitchTarget(JIGGLEDEG); // add JIGGLEDEG degrees initially to jiggle
 
         } else if(moveTimer.seconds() <= testDuration) {
             // set the new DOE K terms
@@ -148,10 +116,10 @@ public class Blue_Terms_DOE extends OpMode {
             twb.setKvelo(Kvelo.getCurrent());
             twb.setKpitchRate(KpitchRate.getCurrent());
 
-            twb.setAutoPitchTarget(pitchFuzz);
+            twb.setAutoPitchTarget(0.0);
 
             // during the experiment, after the jiggle, record min/max
-            if(moveTimer.seconds() > 0.3) {
+            if(moveTimer.seconds() > 0.2) {
                 double thisPos = twb.getPos();
                 double thisPitch = twb.getPitch();
                 double thisDT = twb.getDeltaTime();
@@ -191,7 +159,7 @@ public class Blue_Terms_DOE extends OpMode {
             datalogEXP.ampPitch.set(ampPitch);
             datalogEXP.PitchError.set(Kpitch.getSum());
             //datalogEXP.score.set(ampPitch*4.0+ampPos+Math.abs(AvgPos)); // low score wins!
-            datalogEXP.score.set(Kpitch.getSum()*4.0+Kpos.getSum()); // low score wins!
+            datalogEXP.score.set(16.0*Kpitch.getSum() + Kpos.getSum()); // low score wins!
 
             // The logged timestamp is taken when writeLine() is called.
             datalogEXP.writeLine();
@@ -218,17 +186,24 @@ public class Blue_Terms_DOE extends OpMode {
             Kpitch.resetSum();
         }
 
-        twb.loop(this);  // CALL MAIN TWB CONTROL SYSTEM
+        twb.loopC(this);  // CALL MAIN TWB CONTROL SYSTEM
 
         telemetry.addLine(String.format("EXPERIMENT %d  OF TOTAL %d",count, NEXPERIMENTS));
+        telemetry.addLine(" --- ");
+
         telemetry.addData("Kposition","%.7f",Kpos.getCurrent());
-        telemetry.addData("Kpitch","%.7f", Kpitch.getCurrent());
         telemetry.addData("Kvelo","%.7f", Kvelo.getCurrent());
+        telemetry.addLine(" --- ");
+
+        telemetry.addData("Kpitch","%.7f", Kpitch.getCurrent());
         telemetry.addData("KpitchRate","%.7f", KpitchRate.getCurrent());
 
         telemetry.update();
 
-        if (count > NEXPERIMENTS) requestOpModeStop(); // Stop the opmode
+        if (count > NEXPERIMENTS) {
+            twb.moveGearDown();
+            if(moveTimer.seconds() > GEARDOWNTIME) requestOpModeStop(); // Stop the opmode
+        }
     }
     /**
      * Datalog class encapsulates all the fields that will go into the datalog.

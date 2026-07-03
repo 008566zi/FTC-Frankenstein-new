@@ -15,6 +15,14 @@ public class Term {
 
     //private double targetValue; // Target Value (not the term value)
     private double sum; // Integrated area of the value-target for the experiment time
+
+    /**
+     * Provide values for a Term object (required)
+     * @param lowest the lowest test value
+     * @param highest the highest test value
+     * @param number the number of tests
+     * @param original the term value before the test starts
+     */
     public Term(double lowest, double highest, int number, double original) {
         this.low = lowest;
         this.high = highest;

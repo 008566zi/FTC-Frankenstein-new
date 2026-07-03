@@ -1,10 +1,9 @@
 
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.C_Bot;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.C_TWB;
 import org.firstinspires.ftc.teamcode.RunningAverageArray;
 
 /**
@@ -28,7 +27,7 @@ public class C_PitchTune extends OpMode {
     public void init() {
         twb = new C_TWB(hardwareMap); // Create twb object
 
-        twb.writeLog("C_PitchZero"); // This log will be bigger
+        twb.writeDatalog("C_PitchZero"); // default log
 
         robotPos = new RunningAverageArray(250,true); // for robot position telemetry
 

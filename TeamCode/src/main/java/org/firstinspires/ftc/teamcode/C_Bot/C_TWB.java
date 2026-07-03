@@ -1,10 +1,13 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.C_Bot;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.DatalogTWB;
+import org.firstinspires.ftc.teamcode.TwoWheelBalanceController;
 
 import java.util.Locale;
 
@@ -13,9 +16,7 @@ import java.util.Locale;
  *  Extends TWB class
  * Robot Details: goBilda 9.6 cm wheels, goBilda 26.9:1 motors, 1:1 belt drive
  */
-public class C_TWB extends TwoWheelBalanceController{
-    //private final TwoWheelBalanceController TWBController;
-
+public class C_TWB extends TwoWheelBalanceController {
     private boolean GearDown = true;
     private final Servo leftGearServo;
     private final Servo rightGearServo;
@@ -24,31 +25,24 @@ public class C_TWB extends TwoWheelBalanceController{
     private final static double RIGHTUP = 0.68;  // servo value
     private final static double LEFTDOWN = 0.92; // servo value.  DETACHED
     private final static double LEFTUP = 0.40;  // servo value   DETACHED
+    public final static double GEARDOWNTIME = 0.42; // seconds to put the gear down
     private final ElapsedTime gearTimer = new ElapsedTime(); // Timer used with Claw
-
-    private DatalogTWB CdatalogTWB; // datalog for full recording
-    private boolean writeDatalog = false; // default is no log.  call method to write.
-    public double MMPLoop = 5.0; // 8 is large for pinpoint
-    public double DEGPLoop = -0.5;
 
     private final DcMotor flywheel;
     private final ElapsedTime shotTimer = new ElapsedTime(); // Timer used for shooting
     private boolean shooting = false;
     private boolean collecting = false;
     /**
-     * TWB Constructor.  Call once.
+     * TWB Constructor.  Called once
       */
     public C_TWB(HardwareMap hardwareMap) {
-        super(hardwareMap, 246.0,
-                27.16244, 0.45, 0.0, 0.05, 6, 1,
-                Robot.CPin);
-        // COUNTS_PER_REV    = 2048.0 ;    // CUI ATM103 Encoder at most PPR. Getting 4 times this.
-        // WHEELDIA = 96.0; // goBilda Rhino wheels
-        // TICKSPERMM = (8192)/(96*Math.PI) = 27.16244;
+        super(hardwareMap, 246.0,27.16244, 0.45, 0.0, 0.05, 6, 1);
+        // COUNTS_PER_REV    = 2048.0  CUI ATM103 Encoder at most PPR. Getting 4 times this.
+        // WHEELDIA = 96.0 mm goBilda Rhino wheels
+        // TICKSPERMM = (8192)/(96*Math.PI) = 27.16244
         // Yaw PID terms: kp 0.45, ki 0.12, kd 0.05
-//        TWBController = new TwoWheelBalanceController(hardwareMap, 246.0,
-//                27.16244, 0.45, 0.0, 0.05, 6, 1,
-//                TwoWheelBalanceController.Robot.CPin);
+
+        initializePinpoint(hardwareMap); // includes the IMU
 
         // These are the state terms for a two wheel balancing robot
         // Tune these using the DOE (Design of Experiments) opmode.
@@ -58,7 +52,12 @@ public class C_TWB extends TwoWheelBalanceController{
         setBalanceTerms(-0.01,-0.0025,-0.21,-0.0046);
         //                    -0.01       -0.0022       -0.21          -0.0044
 
-        setArmPitchTarget(-0.5); // measure with C_Pitch_Fuzz opmode
+        setMMPLoop(5.0);
+        setDEGPLoop(-0.5);
+
+        setArmPitchTarget(-0.5); // zero angle, degrees, measure with C_Pitch_Fuzz opmode
+
+        setVerticalCM(130.0); // mm
 
         //TWBController.setDriveMotors(true,false,true); // REV IMU
         setDriveMotors(false,true,false); // Pinpoint
@@ -77,7 +76,7 @@ public class C_TWB extends TwoWheelBalanceController{
     }
 
     public void init_loop() {
-        this.updatePinpoint();
+        updateTicksPinpoint();
     }
     /**
      * Start is called once after play is pushed and calls the TWB controller start
@@ -85,6 +84,8 @@ public class C_TWB extends TwoWheelBalanceController{
     public void start() {
         super.start();
         moveGearUp();
+        updateTicksPinpoint();
+        zeroPinpointTicks();
     }
     /**
      * TWB Main Loop method.  Call repeatedly while running. Contains balance control logic.
@@ -103,16 +104,21 @@ public class C_TWB extends TwoWheelBalanceController{
         }
 
         shoot_loop(); // check if we are shooting
-
-        if (writeDatalog) {
-            CdatalogTWB.logPosPitch(getPos() ,getPosTarget(),
-                    getVelocity(), getVeloTarget(),getPitch(),
-                    getPitchTarget(), getPitchRate(), getYaw(),getYawTarget(),
-                    getPositionVolts(),getPitchVolts(), getDeltaTime());
-            CdatalogTWB.writeLineTWB();
-        }
     }
 
+    @Override
+    public void makeYawContinuous() {
+        // do nothing with pinpoint
+    }
+    @Override
+    public void updateTicks() {
+        updateTicksPinpoint();
+    }
+
+    @Override
+    public void updatePitchYaw() {
+        updatePitchYawPinpoint();
+    }
     public void moveGearUp() {
         leftGearServo.setPosition(LEFTUP);
         rightGearServo.setPosition(RIGHTUP);
@@ -155,35 +161,6 @@ public class C_TWB extends TwoWheelBalanceController{
         if (!shooting && !collecting) flywheel.setPower(0.0);
     }
 
-    /**
-     * TWB method to provide user control of turning the robot.
-     * @param deltaAngle a value from -1 to 1 in radians
-     */
-    public void turn_teleop(double deltaAngle) {
-        // Robot Turning:
-        // The right joystick turns the robot by adjusting the yaw PID turn setpoint
-        setYawTarget(getYawTarget() + deltaAngle );
-    }
-
-    /**
-     * TWB method translates the robot at the current angle by setting Position, Velocity & Pitch Targets.
-     * @param forward value from -1 to 1 that is the forward or backward amount
-     * @param degPerLoop robot pitch degrees per loop, multiplied by forward (6 is good)
-     * @param mmPerLoop robot translation in mm per loop, multiplied by forward (7 is good)
-     */
-    public void translateDrive(double forward, double mmPerLoop, double degPerLoop) {
-
-        // add some pitch to get it moving (degPerLoop of 6 results in gentle movement)
-        setAutoPitchTarget(forward * degPerLoop);
-
-        // Update posTarget (mm) Note: this value * 50 = mm per second
-        // mmPerLoop of 7 results in a gentle speed
-        setPosTarget(getPosTarget() - forward * mmPerLoop );
-
-        // Update the velocity target (mm/sec)
-        //TWBController.setVeloTarget( -forward*(mmPerLoop/0.020));
-        //TWBController.setVeloTarget( -forward*(mmPerLoop/TWBController.getDeltaTime()));
-    }
     public void writeTelemetry(OpMode om) {
         om.telemetry.addLine(String.format(Locale.US, "s Position Target %.1f ,Current %.1f (mm)",
                 getPosTarget(),getPos()));
@@ -193,16 +170,8 @@ public class C_TWB extends TwoWheelBalanceController{
                 getPitchTarget(),getPitch()));
         om.telemetry.addLine(String.format(Locale.US, "Yaw Target %.1f ,Current %.1f (RADIANS)",
                 getYawTarget(),getYaw()));
-        om.telemetry.addData("Left Ticks   ",getLeftTicks());
-        om.telemetry.addData("Right Ticks   ",getRightTicks());
+        //om.telemetry.addData("Left Ticks   ",getLeftTicks());
+        //om.telemetry.addData("Right Ticks   ",getRightTicks());
     }
-    public void writeLog(String LogName) {
-        writeDatalog=true;
-        CdatalogTWB = new DatalogTWB();
-        CdatalogTWB.init(LogName);
-    }
-    public void setMMPLoop(double mmpLoop) {MMPLoop = mmpLoop;}
-    public void setDEGPLoop(double degpLoop) {DEGPLoop = degpLoop;}
-    public double getMMPLoop() {return MMPLoop;}
-    public double getDEGPLoop() {return DEGPLoop;}
+
 }
