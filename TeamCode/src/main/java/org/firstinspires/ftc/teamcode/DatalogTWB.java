@@ -23,8 +23,8 @@ public class DatalogTWB {
         // Note that the order in which we set datalog fields
         // does *not* matter! Order is configured inside the Datalog class constructor.
         datalog.pos.set(pos);
-        datalog.posXPP.set(posXPP);
-        datalog.posYPP.set(posYPP);
+        //datalog.posXPP.set(posXPP);
+        //datalog.posYPP.set(posYPP);
         datalog.posTarget.set(posTarget);
         datalog.veloTarget.set(veloTarget);
         datalog.pitch.set(pitch);
@@ -36,8 +36,8 @@ public class DatalogTWB {
         datalog.positionVolts.set(posVolts); // look for saturation when tuning
         datalog.pitchVolts.set(pitchVolts);  // look for saturation when tuning
         datalog.dt.set(dt);
-        datalog.leftVelo.set(leftVelo);
-        datalog.rightVelo.set(rightVelo);
+        //datalog.leftVelo.set(leftVelo);
+        //datalog.rightVelo.set(rightVelo);
     }
     public void logPosPitch(double pos,
                             double posTarget, double velocity, double veloTarget,
@@ -78,15 +78,15 @@ public class DatalogTWB {
         public Datalogger.GenericField pitchTarget = new Datalogger.GenericField("PitchTarget");
         public Datalogger.GenericField pitchRATE = new Datalogger.GenericField("pitchRATE");
         public Datalogger.GenericField pos = new Datalogger.GenericField("Pos_MyOdo");
-        public Datalogger.GenericField posXPP = new Datalogger.GenericField("PosX_PP");
-        public Datalogger.GenericField posYPP = new Datalogger.GenericField("PosY_PP");
+        //public Datalogger.GenericField posXPP = new Datalogger.GenericField("PosX_PP");
+        //public Datalogger.GenericField posYPP = new Datalogger.GenericField("PosY_PP");
         public Datalogger.GenericField posTarget = new Datalogger.GenericField("PosTarget");
         public Datalogger.GenericField veloTarget = new Datalogger.GenericField("VeloTarget");
         public Datalogger.GenericField yaw = new Datalogger.GenericField("Yaw");
         public Datalogger.GenericField yawTarget = new Datalogger.GenericField("yawTarget");
         public Datalogger.GenericField linVelo = new Datalogger.GenericField("linearVelo");
-        public Datalogger.GenericField leftVelo = new Datalogger.GenericField("left_X_Velo_pp");
-        public Datalogger.GenericField rightVelo = new Datalogger.GenericField("right_Y_Velo_pp");
+        //public Datalogger.GenericField leftVelo = new Datalogger.GenericField("left_X_Velo_pp");
+        //public Datalogger.GenericField rightVelo = new Datalogger.GenericField("right_Y_Velo_pp");
         public Datalogger.GenericField positionVolts = new Datalogger.GenericField("positionVolts");
         public Datalogger.GenericField pitchVolts = new Datalogger.GenericField("pitchVolts");
         public Datalogger.GenericField totalVolts = new Datalogger.GenericField("TotalVots");
@@ -110,15 +110,15 @@ public class DatalogTWB {
                             pitchTarget,
                             pitchRATE,
                             pos,
-                            posXPP,
-                            posYPP,
+                            //posXPP,
+                            //posYPP,
                             posTarget,
                             veloTarget,
                             yaw,
                             yawTarget,
                             linVelo,
-                            leftVelo,
-                            rightVelo,
+                            //leftVelo,
+                            //rightVelo,
                             positionVolts,
                             pitchVolts,
                             totalVolts,

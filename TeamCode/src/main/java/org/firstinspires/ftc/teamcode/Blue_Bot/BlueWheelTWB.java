@@ -44,11 +44,11 @@ public class BlueWheelTWB extends TwoWheelBalanceController{
         super(hardwareMap, 300.0,
                 1.75619, 0.45, 0.0, 0.05, 7, 3);
         // The distance between the blue wheels is 300 mm
-        // REVSPUR40PPR = 1120; // REV Core Hex Motor Pulses per Revolution at output shaft
-        // COUNTS_PER_REV    = 2048.0 ;    // CUI ATM103 Encoder at most PPR
-        // WHEELDIA = 203.0; // 8 inch wheel diameter (mm)
-        // TICKSPERMM = (1120)/(203*Math.PI) = 1.75619; // REV SPUR 40:1, 8in wheels
+        // REVSPUR40PPR = 1120; REV Core Hex Motor Pulses per Revolution at output shaft
+        // WHEELDIA = 203.0;  8 inch wheel diameter (mm)
+        // TICKSPERMM = (1120)/(203*Math.PI) = 1.75619;  REV SPUR 40:1, 8in wheels
         // Yaw PID terms: kp 0.45, ki 0.12, kd 0.05
+        setMaxLinearVelocity(203.0, 40.0);
 
         this.imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,

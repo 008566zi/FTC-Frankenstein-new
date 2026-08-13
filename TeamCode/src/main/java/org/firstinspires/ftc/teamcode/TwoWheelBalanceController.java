@@ -54,6 +54,8 @@ public class TwoWheelBalanceController {
     private final double veloTarget = 0.0; // not using velocity target
     private double linearVelocity = 0.0;
 
+    private double maxLinearVelocity = 100.0;  // mm/second.  absolute max velocity
+
     private double vertCM = 10.0;  // vertical distance mm from the wheel center to the robot center of mass
     private double autoPitchTarget = 0; // used to set pitch from an auto routine
     private double armPitchTarget = 0;
@@ -152,6 +154,15 @@ public class TwoWheelBalanceController {
     }
 
     /**
+     * Sets Maximum Linear Velocity in mm/second
+     * @param wheelDia in mm
+     * @param gearRatio ratio from the motor to the wheels
+     */
+    public void setMaxLinearVelocity(double wheelDia, double gearRatio) {
+        maxLinearVelocity = Math.PI * wheelDia * 100 / gearRatio;
+    }
+
+    /**
      * setBalanceTerms initializes the four balance controller terms
      * @param kpos K Position  volts/mm
      * @param kvelo K Velocity volts/mm/second
@@ -231,7 +242,7 @@ public class TwoWheelBalanceController {
         rightDrive.setPower(totalPowerVolts  + yawPower);
 
         // kill the robot if it pitches over too far or runs fast when not asked to
-        if ((Math.abs(pitch) > 60.0)  || (Math.abs(linearVelocity) > 1400)) {
+        if ((Math.abs(pitch) > 60.0)  || (Math.abs(linearVelocity) > maxLinearVelocity)) {
             theOpmode.requestOpModeStop(); // Stop the opmode
         }
 

@@ -28,8 +28,8 @@ public class C_BackNForth_DOE extends OpMode {
     final private ElapsedTime moveTimer = new ElapsedTime();
 
     // DOE constants.  Modify these for the experiment
-    private final double testDuration = 4.0; // seconds per experiment
-    private final double DISTANCE = 300.0; // Travel distance for each test (mm)
+    private final double testDuration = 5.0; // seconds per experiment
+    private final double DISTANCE = 250.0; // Travel distance for each test (mm)
     private boolean forward = true; // to keep track of direction
     private double virtualJoystick = 0.0;
 
@@ -57,8 +57,10 @@ public class C_BackNForth_DOE extends OpMode {
         twb.writeDatalog("C_DOE_bnf_Full"); // This log will be bigger
 
         // MODIFY THESE FOR THE EXPERIMENTS.
-        term1 = new Term(-0.012,-.008,5,twb.getKpos());  // Kpos
-        term2 = new Term(-0.0028,-0.0023,5,twb.getKvelo()); // Kvelo
+        //term1 = new Term(-0.012,-.008,5,twb.getKpos());  // Kpos
+        term1 = new Term(0.009,0.013,5,twb.getKpos());  // Kpos
+        //term2 = new Term(-0.0028,-0.0023,5,twb.getKvelo()); // Kvelo
+        term2 = new Term(0.0025,0.0029,5,twb.getKvelo()); // Kvelo
 
         NEXPERIMENTS = term1.getN() * term2.getN();
 
@@ -102,8 +104,8 @@ public class C_BackNForth_DOE extends OpMode {
     public void loop() {
         if (moveTimer.seconds() < 0.03) {
             // set the new DOE K terms
-            twb.setKpos(term1.getCurrent());
-            twb.setKvelo(term2.getCurrent());
+            twb.setKpos(-term1.getCurrent());
+            twb.setKvelo(-term2.getCurrent());
 
             //twb.setMMPLoop(term1.getCurrent());
             //twb.setDEGPLoop(term2.getCurrent());

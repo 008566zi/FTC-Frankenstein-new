@@ -41,6 +41,8 @@ public class C_TWB extends TwoWheelBalanceController {
         // WHEELDIA = 96.0 mm goBilda Rhino wheels
         // TICKSPERMM = (8192)/(96*Math.PI) = 27.16244
         // Yaw PID terms: kp 0.45, ki 0.12, kd 0.05
+        // goBilda 26.9:1 motors
+        setMaxLinearVelocity(96.0, 26.9);
 
         initializePinpoint(hardwareMap); // includes the IMU
 
@@ -49,7 +51,7 @@ public class C_TWB extends TwoWheelBalanceController {
         // Both Kpos and Kvelo are negative when the center of mass is below the wheel axles
         // and positive when the CM is above (unstable). Sign does not change for Kpitch & KpitchRate
         //                            Kpos        Kvelo       Kpitch       KpitchRate
-        setBalanceTerms(-0.01,-0.0025,-0.21,-0.0046);
+        setBalanceTerms(-0.011,-0.0028,-0.21,-0.0045);
         //                    -0.01       -0.0022       -0.21          -0.0044
 
         setMMPLoop(5.0);
