@@ -25,7 +25,7 @@ public class C_TWB extends TwoWheelBalanceController {
     private final static double RIGHTUP = 0.68;  // servo value
     private final static double LEFTDOWN = 0.92; // servo value.  DETACHED
     private final static double LEFTUP = 0.40;  // servo value   DETACHED
-    public final static double GEARDOWNTIME = 0.42; // seconds to put the gear down
+    public final static double GEARDOWNTIME = 0.44; // seconds to put the gear down
     private final ElapsedTime gearTimer = new ElapsedTime(); // Timer used with Claw
 
     private final DcMotor flywheel;
@@ -50,8 +50,8 @@ public class C_TWB extends TwoWheelBalanceController {
         // Tune these using the DOE (Design of Experiments) opmode.
         // Both Kpos and Kvelo are negative when the center of mass is below the wheel axles
         // and positive when the CM is above (unstable). Sign does not change for Kpitch & KpitchRate
-        //                            Kpos        Kvelo       Kpitch       KpitchRate
-        setBalanceTerms(-0.011,-0.0028,-0.21,-0.0045);
+        //                      Kpos        Kvelo       Kpitch       KpitchRate
+        setBalanceTerms(-0.014,-0.0025,-0.20,-0.0045);
         //                    -0.01       -0.0022       -0.21          -0.0044
 
         setMMPLoop(5.0);

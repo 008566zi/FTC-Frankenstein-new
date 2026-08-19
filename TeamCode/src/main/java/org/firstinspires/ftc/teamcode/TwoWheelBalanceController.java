@@ -20,7 +20,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
  * Uses four terms (states) to control balance: Position, Velocity, Pitch, PitchRate
  * Also provides Yaw (turn) control using a PID.
  * IMU provides pitch, pitchRate, Yaw and YawRate
- * The Position and velocity is of the center of the wheels.
+ * The Position and velocity is at the robots center of mass (see vertCM & TWBOdometry).
  */
 public class TwoWheelBalanceController {
     private final DcMotor leftDrive;
@@ -57,9 +57,9 @@ public class TwoWheelBalanceController {
     private double maxLinearVelocity = 100.0;  // mm/second.  absolute max velocity
 
     private double vertCM = 10.0;  // vertical distance mm from the wheel center to the robot center of mass
-    private double autoPitchTarget = 0; // used to set pitch from an auto routine
-    private double armPitchTarget = 0;
-    private double pitchTarget = 0;
+    private double autoPitchTarget = 0; // used to set the balance pitch from an auto routine
+    private double armPitchTarget = 0; // for use when the robots CM changes in use, then the balance pitch changes
+    private double pitchTarget = 0;  // The sum of the above two variables
 
     private double pitch = 0;
     private double oldPitch = 0;
@@ -86,16 +86,20 @@ public class TwoWheelBalanceController {
     // The variables below are to try to get a consistent delta time for the controller.
     // Not sure how well this works. Don't know how to make it better without different runtime env.
     // Array size was 11 for IMU.  8 with gobilda pinpoint.
-    private final RunningAverageArray deltaTimeRA = new RunningAverageArray(20,false);
+    private final RunningAverageArray deltaTimeRA = new RunningAverageArray(1,false);
     private double currentTime;
     private double lastTime;
     private double deltaTime = 0.04; // initialize, replaced by a running average
-    public double MMPLoop = 5.0; // 8 is large for pinpoint
-    public double DEGPLoop = 0.0;
+
+    private ElapsedTime cycleTimer = new ElapsedTime();
+    private final double TARGET_LOOP_MS = 20.0; // Target 20ms (50Hz)
+
+    public double MMPLoop = 5.0; // defines the maximum robot velocity (ramp rate)
+    public double DEGPLoop = 0.0; // defines a pitch shift for when the robot moves
 
     private DatalogTWB datalogTWB; // datalog for full recording
     private boolean writeDatalog = false; // default is no log.  call method to write.
-    private final boolean fixedLoopTime = false; // not using fixed loop times
+    //private final boolean fixedLoopTime = false; // not using fixed loop times
 
     /**
      * TWB Constructor.  Call once in initialization.
@@ -187,6 +191,9 @@ public class TwoWheelBalanceController {
         currentTime = runtime.seconds();
         lastTime = currentTime;
 
+        cycleTimer.reset();
+
+
         // reset the PIDs
         yawPID.reset();
     }
@@ -209,8 +216,16 @@ public class TwoWheelBalanceController {
      * Teleoperated inputs are removed from this method, so it can be called in autonomous.
       */
     public void loop(OpMode theOpmode) {
-        if (fixedLoopTime) deltaTime = 0.015; // experiment to see if we can make velocity smoother
-        else setLoopTime(); // this updates the deltaTime value
+        //if (fixedLoopTime) deltaTime = 0.015; // experiment to see if we can make velocity smoother
+        //else
+        cycleTimer.reset();
+
+        setLoopTime(); // this updates the deltaTime value
+
+
+        // --- Put your main robot logic, sensor reads, and motor writes here ---
+
+
 
         updateTicks();
 
@@ -242,7 +257,7 @@ public class TwoWheelBalanceController {
         rightDrive.setPower(totalPowerVolts  + yawPower);
 
         // kill the robot if it pitches over too far or runs fast when not asked to
-        if ((Math.abs(pitch) > 60.0)  || (Math.abs(linearVelocity) > maxLinearVelocity)) {
+        if ((Math.abs(pitch) > 60.0)  || (Math.abs(linearVelocity) > 1.5*maxLinearVelocity)) {
             theOpmode.requestOpModeStop(); // Stop the opmode
         }
 
@@ -252,6 +267,12 @@ public class TwoWheelBalanceController {
                     getPitchTarget(), getPitchRate(), getYaw(),getYawTarget(),
                     getPositionVolts(),getPitchVolts(), getDeltaTime());
             datalogTWB.writeLineTWB();
+        }
+
+        // Stall/wait out the rest of the target loop time
+        while (cycleTimer.milliseconds() < TARGET_LOOP_MS) {
+            // Yield thread slightly to prevent maxing out CPU completely
+            Thread.yield();
         }
     }
     public void makeYawContinuous() {
@@ -285,7 +306,7 @@ public class TwoWheelBalanceController {
         lastTime = currentTime;
         currentTime = runtime.seconds();
         double dT = currentTime - lastTime;
-        if(dT > 0.07) dT = 0.07; // fake!
+        //if(dT > 0.07) dT = 0.07; // fake!
         // add the new delta time to the running average
         deltaTimeRA.add(dT);
         deltaTime = deltaTimeRA.getAverage();

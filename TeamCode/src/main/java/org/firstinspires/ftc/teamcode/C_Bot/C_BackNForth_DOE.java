@@ -57,10 +57,10 @@ public class C_BackNForth_DOE extends OpMode {
         twb.writeDatalog("C_DOE_bnf_Full"); // This log will be bigger
 
         // MODIFY THESE FOR THE EXPERIMENTS.
-        //term1 = new Term(-0.012,-.008,5,twb.getKpos());  // Kpos
-        term1 = new Term(0.009,0.013,5,twb.getKpos());  // Kpos
-        //term2 = new Term(-0.0028,-0.0023,5,twb.getKvelo()); // Kvelo
-        term2 = new Term(0.0025,0.0029,5,twb.getKvelo()); // Kvelo
+        term1 = new Term(0.011,0.015,5,twb.getKpos());  // Kpos
+
+        //term2 = new Term(0.0024,0.0025,2,twb.getKvelo()); // Kvelo
+        term2 = new Term(0.20,0.22,3,twb.getKpitch()); // Kpitch
 
         NEXPERIMENTS = term1.getN() * term2.getN();
 
@@ -90,7 +90,7 @@ public class C_BackNForth_DOE extends OpMode {
     public void start() {
         twb.start();
 
-        twb.setMMPLoop(3.0);  // sets the max velocity
+        twb.setMMPLoop(2.5);  // sets the max velocity
 
         resetRuntime();
         moveTimer.reset();
@@ -105,7 +105,8 @@ public class C_BackNForth_DOE extends OpMode {
         if (moveTimer.seconds() < 0.03) {
             // set the new DOE K terms
             twb.setKpos(-term1.getCurrent());
-            twb.setKvelo(-term2.getCurrent());
+            //twb.setKvelo(-term2.getCurrent());
+            twb.setKpitch(-term2.getCurrent());
 
             //twb.setMMPLoop(term1.getCurrent());
             //twb.setDEGPLoop(term2.getCurrent());
@@ -133,8 +134,8 @@ public class C_BackNForth_DOE extends OpMode {
             term2.updateSum(thisPitch, twb.getPitchTarget(), thisDT);
 
             // turn off the virtual joystick when distance is reached
-            if (forward && twb.getPos() >= DISTANCE) virtualJoystick = 0.0;
-            if (!forward && twb.getPos() <= 0.0) virtualJoystick = 0.0;
+            if (forward && twb.getPosTarget() >= DISTANCE) virtualJoystick = 0.0;
+            if (!forward && twb.getPosTarget() <= 0.0) virtualJoystick = 0.0;
 
         } else if(moveTimer.seconds() > testDuration ) {
             virtualJoystick = 0.0;
@@ -147,7 +148,7 @@ public class C_BackNForth_DOE extends OpMode {
 
             datalogEXP.PosError.set(term1.getSum());
 
-            datalogEXP.PitchError.set(term2.getSum());
+            datalogEXP.PitchError.set(term2.getSum()*10.0); // amplify to better match PosError
 
             // The logged timestamp is taken when writeLine() is called.
             datalogEXP.writeLine();
