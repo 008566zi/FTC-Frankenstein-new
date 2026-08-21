@@ -4,7 +4,7 @@ This is the durable, branch-local progress record used by the student guide. It 
 different student determine what has actually been reviewed without relying on an earlier
 conversation.
 
-Working branch: `UNCONFIRMED`
+Working branch: `PedroPathingSetup2.0`
 
 ## Status meanings
 
@@ -36,14 +36,14 @@ Working branch: `UNCONFIRMED`
 
 | Prompt | Status | Review date | Durable evidence or decision |
 | --- | --- | --- | --- |
-| LP-01 | Not started | — | Architecture discovery not started. |
-| LP-02 | Not started | — | Architecture decision has not been recorded. |
-| LP-03 | Not started | — | Dependency and compatibility research not started. |
-| LP-04 | Not started | — | Dependency installation not started. |
-| LP-05 | Not started | — | Vendor-neutral integration seams not started. |
-| LP-06 | Not started | — | Team-specific Pedro/Pinpoint pilot integration not started. |
-| LP-07 | Not started | — | Session 2 software validation not started. |
-| LP-08 | Not started | — | Staged physical configuration not started. |
-| LP-09 | Not started | — | Pinpoint pose and restricted manual-drive hardware checks not started. |
-| LP-10 | Not started | — | Version-matched Pedro tuning and evidence collection not started. |
-| LP-11 | Not started | — | Cautious visualized pilot path and final hardware reconciliation not started. |
+| LP-01 | Reviewed | 2026-08-02 | Student accepted the separate, team-specific Team A Pedro Robot design. Baseline drivetrain ownership is in `DriveSubsystem` and `DriveHardware`. |
+| LP-02 | Reviewed | 2026-08-02 | Student accepted `ARCHITECTURE.md` documentation of the approved separate Team A Pedro Robot design as future intent only. |
+| LP-03 | Reviewed | 2026-08-02 | Student accepted pinned Pedro v2.1.2 core-only pilot plan, compile SDK 34 requirement, and Microsoft OpenJDK 17.0.2 Gradle readiness. |
+| LP-04 | Reviewed | 2026-08-02 | Student accepted pinned Pedro `2.1.2`, compile SDK 34, successful Android Studio Sync, and successful JDK 17 TeamCode build; no Pedro behavior exists yet. |
+| LP-05 | Reviewed | 2026-08-03 | Student accepted vendor-neutral pose/drive seams, safe path-following FSM state, preserved simple mecanum composition, and successful TeamCode build. |
+| LP-06 | Reviewed | 2026-08-04 | Student accepted separate Team A Pedro robot/controller/factory/configuration gate, preserved TeamARobot, and successful JDK 17 TeamCode build. |
+| LP-07 | Reviewed | 2026-08-04 | Student accepted Session 2 static/lifecycle validation, successful Android Studio Sync/TeamCode assembly, and the real-hardware limitations. |
+| LP-08 | Reviewed | 2026-08-04 | Student accepted recorded Team A hardware facts, separate initialization/manual/path gates, and successful TeamCode build; LP-09 hardware checks remain required. |
+| LP-09 | Reviewed | 2026-08-11 | Director accepted verified Pinpoint signs/distances/rotation/return error and restricted raised-wheel drive/stop behavior; manual gate open, path gate closed, TeamCode build passed. |
+| LP-10 | Reviewed | 2026-08-20 | Director accepted the complete tuning evidence, Predictive Braking `P=0.15`, endpoint `0.97`, and the `0.20` application power limit. TeamCode build passed and the path-readiness gate is open; no pilot path exists yet. |
+| LP-11 | Results ready | 2026-08-21 | Director reports the 24-inch pilot worked, but detailed pose/stop evidence and final LP-11 acceptance are not recorded. The same Pedro selector controls now expose the pilot, 11-segment DECODE route, 10-segment Curving Test, and 3-segment Illegal Path; the imported routes have not been physically run. TeamCode build passed. |
