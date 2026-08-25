@@ -47,7 +47,7 @@ public class Blue_Set_Arm_Angle_Pitch extends OpMode {
     public void init_loop() {
         if (gamepad1.dpadUpWasPressed()) pitchFuzz += 0.1;
         else if (gamepad1.dpadDownWasPressed()) pitchFuzz -= 0.1;
-        twb.setAutoPitchTarget(pitchFuzz);
+        twb.setZeroPitchTarget(pitchFuzz);
 
         if (gamepad1.dpadLeftWasPressed()) ARMANGLE += 20.0;
         else if (gamepad1.dpadRightWasPressed()) ARMANGLE -= 20.0;

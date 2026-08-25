@@ -107,7 +107,7 @@ public class C_Terms_DOE extends OpMode {
             twb.setKvelo(Kvelo.getOriginal());
             twb.setKpitchRate(KpitchRate.getOriginal());
 
-            twb.setAutoPitchTarget(JIGGLEDEG); // add JIGGLEDEG degrees initially to jiggle
+            twb.setZeroPitchTarget(JIGGLEDEG); // add JIGGLEDEG degrees initially to jiggle
 
         } else if(moveTimer.seconds() <= testDuration) {
             // set the new DOE K terms
@@ -116,7 +116,7 @@ public class C_Terms_DOE extends OpMode {
             twb.setKvelo(Kvelo.getCurrent());
             twb.setKpitchRate(KpitchRate.getCurrent());
 
-            twb.setAutoPitchTarget(0.0);
+            twb.setZeroPitchTarget(0.0);
 
             // during the experiment, after the jiggle, record min/max
             if(moveTimer.seconds() > 0.2) {

@@ -7,19 +7,19 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.TWBMove;
+import org.firstinspires.ftc.teamcode.MoveProfiles;
 
 /**
  * This Iterative Autonomous OpMode is for a Two Wheel Balancing Robot.
  * Moves forward, moves back. Does other things.
  * Used for developing motion profiles.
  */
-@Autonomous(name="C Back and Forth Auto")
-public class C_back_n_forth_Auto extends OpMode {
+@Autonomous(name="C Auto 1")
+public class C_Auto1 extends OpMode {
     private C_TWB twb;
-    private double DIST = 1000; // mm
-    private double TIME = 3.0; // sec
-    private TWBMove myTWBmoves;
+    private double DIST = 500; // mm
+    private double TIME = 2.0; // sec
+    private MoveProfiles myTWBmoves;
     final private ElapsedTime moveTimer = new ElapsedTime();
     private double currentPos;
 
@@ -38,30 +38,42 @@ public class C_back_n_forth_Auto extends OpMode {
 
         twb.writeDatalog("CLogAutoBnF");
 
+        myTWBmoves = new MoveProfiles(TIME,DIST);
+
         twb.moveGearDown();
     }
 
     @Override
     public void init_loop() {
-        telemetry.addLine("TWB Back-n-Forth Auto INIT ");
+        telemetry.addLine("Move robot back and forth ");
+        telemetry.addLine(" --- ");
 
         if (gamepad1.dpadUpWasPressed()) DIST += 100.0;
         else if (gamepad1.dpadDownWasPressed()) DIST -= 100.0;
 
         if (gamepad1.dpadLeftWasPressed()) TIME += 0.25;
         else if (gamepad1.dpadRightWasPressed()) TIME -= 0.25;
+
+        double maxVelo = myTWBmoves.getMaxVelocity(DIST, TIME); // max move velocity
+
+        if (maxVelo > twb.getMaxLinearVelocity()) {
+            DIST = twb.getMaxLinearVelocity() / TIME; // adjust the distance based on the time
+        }
+
         telemetry.addLine("DPAD UP - DOWN Adjusts the distance");
         telemetry.addData("Travel Distance (mm)"," %.1f", DIST);
         telemetry.addLine("DPAD LEFT - RIGHT Adjusts the time");
         telemetry.addData("Travel Time (seconds) =", TIME);
-
+        telemetry.addLine(" --- ");
+        telemetry.addData("Max MOVE Velocity (mm/sec)"," %.1f", maxVelo);
+        telemetry.addData("Max ROBOT Velocity (mm/sec)"," %.1f", twb.getMaxLinearVelocity());
         telemetry.update();
     }
 
     @Override
     public void start() {
         state = State.START;
-        myTWBmoves = new TWBMove(TIME,DIST);
+        myTWBmoves = new MoveProfiles(TIME,DIST);
         resetRuntime();
         moveTimer.reset();
         twb.start();
@@ -84,7 +96,7 @@ public class C_back_n_forth_Auto extends OpMode {
                 break;
             case MOVE1:
                 if (moveTimer.seconds() <= TIME ) {
-                    newTargets = myTWBmoves.lineMove(moveTimer.seconds(),currentPos);
+                    newTargets = myTWBmoves.lineMoveLoop(moveTimer.seconds(),currentPos);
                     twb.setPosTarget(newTargets[0]);
                 } else if (moveTimer.seconds() > TIME+SETTLE_TIME ) {
                     state = State.SHOOT;
@@ -105,7 +117,7 @@ public class C_back_n_forth_Auto extends OpMode {
             case MOVE2:
                  if (moveTimer.seconds() <= TIME) {
                      myTWBmoves.reverseDir = true;
-                     newTargets = myTWBmoves.lineMove(moveTimer.seconds(), currentPos);
+                     newTargets = myTWBmoves.lineMoveLoop(moveTimer.seconds(), currentPos);
                      twb.setPosTarget(newTargets[0]);
                  } else if (moveTimer.seconds() > TIME+SETTLE_TIME ) {
                      state = State.GEARDOWN;

@@ -90,7 +90,7 @@ public class C_BackNForth_DOE extends OpMode {
     public void start() {
         twb.start();
 
-        twb.setMMPLoop(2.5);  // sets the max velocity
+        twb.setMaxAllowedVelocity(300.0);  // sets the max velocity
 
         resetRuntime();
         moveTimer.reset();
@@ -170,7 +170,7 @@ public class C_BackNForth_DOE extends OpMode {
             term2.resetSum();
         }
         // Translate the robot
-        twb.translateDrive(virtualJoystick,twb.getMMPLoop(),twb.getDEGPLoop());
+        twb.translateDrive(virtualJoystick, twb.getDEGPLoop());
 
         twb.loopC(this);  // CALL MAIN TWB CONTROL SYSTEM
 

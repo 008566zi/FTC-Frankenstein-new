@@ -6,7 +6,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.DatalogTWB;
 import org.firstinspires.ftc.teamcode.TwoWheelBalanceController;
 
 import java.util.Locale;
@@ -51,13 +50,14 @@ public class C_TWB extends TwoWheelBalanceController {
         // Both Kpos and Kvelo are negative when the center of mass is below the wheel axles
         // and positive when the CM is above (unstable). Sign does not change for Kpitch & KpitchRate
         //                      Kpos        Kvelo       Kpitch       KpitchRate
-        setBalanceTerms(-0.014,-0.0025,-0.20,-0.0045);
+        setBalanceTerms(-0.013,-0.0025,-0.20,-0.0045);
         //                    -0.01       -0.0022       -0.21          -0.0044
 
-        setMMPLoop(5.0);
+        setTARGET_LOOP_MS(20.0); // This has been tested and seems good
+        setMaxAllowedVelocity(500.0);
         setDEGPLoop(-0.5);
 
-        setArmPitchTarget(-0.5); // zero angle, degrees, measure with C_Pitch_Fuzz opmode
+        setAddPitchTarget(-0.5); // zero angle, degrees, measure with C_Pitch_Fuzz opmode
 
         setVerticalCM(130.0); // mm
 
@@ -98,7 +98,7 @@ public class C_TWB extends TwoWheelBalanceController {
         if (!GearDown) {
             loop(theOpmode); // balancing
         } else { // gear is down or going down
-            if (gearTimer.seconds() < 0.4) {
+            if (gearTimer.seconds() < GEARDOWNTIME) {
                 loop(theOpmode); // keep balancing while going down
             } else {
                 setMotorsZero();
@@ -163,11 +163,29 @@ public class C_TWB extends TwoWheelBalanceController {
         if (!shooting && !collecting) flywheel.setPower(0.0);
     }
 
+    public void setMaxSpeedGamepad(OpMode om) {
+
+        double maxVelo = getMaxAllowedVelocity() / getDeltaTime();
+
+        if (om.gamepad1.dpadUpWasPressed()) maxVelo += 10.0;
+        else if (om.gamepad1.dpadDownWasPressed()) maxVelo -= 10.0;
+
+        if (maxVelo < 20.0) maxVelo = 20.0;
+        else if (maxVelo > getMaxLinearVelocity()) maxVelo = getMaxLinearVelocity();
+
+        setMaxAllowedVelocity(maxVelo*getDeltaTime());
+
+        om.telemetry.addLine("DPAD UP - DOWN Adjusts the Maximum Velocity");
+        om.telemetry.addLine(" --- ");
+        om.telemetry.addData("Max MOVE Velocity (mm/sec)"," %.1f", maxVelo);
+        om.telemetry.addData("Max ROBOT Velocity (mm/sec)"," %.1f", getMaxLinearVelocity());
+        om.telemetry.update();
+    }
     public void writeTelemetry(OpMode om) {
         om.telemetry.addLine(String.format(Locale.US, "s Position Target %.1f ,Current %.1f (mm)",
                 getPosTarget(),getPos()));
         om.telemetry.addLine(String.format(Locale.US, "s Velocity Target %.1f ,Current %.1f (mm/sec)",
-                getVeloTarget(),getVelocity()));
+                getAcceleration(),getVelocity()));
         om.telemetry.addLine(String.format(Locale.US, "Pitch Target %.1f ,Current %.1f (DEGREES)",
                 getPitchTarget(),getPitch()));
         om.telemetry.addLine(String.format(Locale.US, "Yaw Target %.1f ,Current %.1f (RADIANS)",

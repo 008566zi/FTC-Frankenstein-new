@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.Blue_Bot;
 
-import android.annotation.SuppressLint;
-
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -10,7 +8,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.ArmServo;
-import org.firstinspires.ftc.teamcode.DatalogTWB;
 import org.firstinspires.ftc.teamcode.PiecewiseFunction;
 import org.firstinspires.ftc.teamcode.TwoWheelBalanceController;
 
@@ -63,7 +60,8 @@ public class BlueWheelTWB extends TwoWheelBalanceController{
         //                                  0.016       0.015       -0.58           -0.025
         setBalanceTerms(0.001785,0.00125,-0.04845,-0.002125);
 
-        setMMPLoop(8.0);
+        setTARGET_LOOP_MS(20.0); // need to test this for a good value
+        setMaxAllowedVelocity(500.0);
         setDEGPLoop(0.5);
 
         setDriveMotors(false, true, false);
@@ -135,7 +133,7 @@ public class BlueWheelTWB extends TwoWheelBalanceController{
       */
     public void loopBlue(OpMode theOpmode) {
 
-        setArmPitchTarget(pitchAngVec.getY(theArm.getAngle()));
+        setAddPitchTarget(pitchAngVec.getY(theArm.getAngle()));
 
         loop(theOpmode);
 
@@ -194,7 +192,7 @@ public class BlueWheelTWB extends TwoWheelBalanceController{
         om.telemetry.addLine(String.format(Locale.US,"s Position Target %.1f ,Current %.1f (mm)",
                 getPosTarget(),getPos()));
         om.telemetry.addLine(String.format(Locale.US,"s Velocity Target %.1f ,Current %.1f (mm/sec)",
-                getVeloTarget(),getVelocity()));
+                getAcceleration(),getVelocity()));
         om.telemetry.addLine(String.format(Locale.US,"Pitch Target %.1f ,Current %.1f (degrees)",
                 getPitchTarget(),getPitch()));
         om.telemetry.addLine(String.format(Locale.US,"Arm Angle Target %.1f ,Current %.1f (degrees)",

@@ -97,7 +97,7 @@ public class Blue_Terms_DOE extends OpMode {
     public void init_loop() {
         if (gamepad1.dpadUpWasPressed()) pitchFuzz += 0.1;
         else if (gamepad1.dpadDownWasPressed()) pitchFuzz -= 0.1;
-        twb.setAutoPitchTarget(pitchFuzz);
+        twb.setZeroPitchTarget(pitchFuzz);
 
         telemetry.addLine("DOE to determine Kpos, Kvelo, Kpitch & KpitchRate");
         telemetry.addData("ARM Angle (deg) =", ARMANGLE);
@@ -138,7 +138,7 @@ public class Blue_Terms_DOE extends OpMode {
             twb.setKvelo(Kvelo.getOriginal());
             twb.setKpitchRate(KpitchRate.getOriginal());
 
-            twb.setAutoPitchTarget(JIGGLEDEG+pitchFuzz); // add JIGGLEDEG degrees initially to jiggle
+            twb.setZeroPitchTarget(JIGGLEDEG+pitchFuzz); // add JIGGLEDEG degrees initially to jiggle
 
         } else if(moveTimer.seconds() <= testDuration) {
             // set the new DOE K terms
@@ -147,7 +147,7 @@ public class Blue_Terms_DOE extends OpMode {
             twb.setKvelo(Kvelo.getCurrent());
             twb.setKpitchRate(KpitchRate.getCurrent());
 
-            twb.setAutoPitchTarget(pitchFuzz);
+            twb.setZeroPitchTarget(pitchFuzz);
 
             // during the experiment, after the jiggle, record min/max
             if(moveTimer.seconds() > 0.3) {

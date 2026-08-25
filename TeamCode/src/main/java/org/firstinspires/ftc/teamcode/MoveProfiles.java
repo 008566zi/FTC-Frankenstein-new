@@ -1,28 +1,23 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.annotation.SuppressLint;
-
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-
 /**
- * Two Wheel Bot Move object.
+ *  Move Profile object.
  *  Methods to drive specified distance in specified time using curves to smooth the motion.
- *  Position, velocity and pitch curves are used.
+ *  Position, velocity curves are used.
  */
-public class TWBMove {
+public class MoveProfiles {
     // members
     public boolean reverseDir = false; // for running backwards
     
     private final PiecewiseFunction posCurve = new PiecewiseFunction();
     private final PiecewiseFunction veloCurve = new PiecewiseFunction();
-    private final PiecewiseFunction pitchCurve = new PiecewiseFunction();
 
     /**
-     * Constructor.  Initializes the position and pitch curves.
+     * Constructor.  Initializes the position curve.
      * @param time seconds
      * @param distance how far to move in mm
       */
-    public TWBMove(double time, double distance) {
+    public MoveProfiles(double time, double distance) {
 
         posCurve.debug = false;
         fillSineWave(20,time,distance,(- Math.PI/2.0), Math.PI, true, posCurve);
@@ -30,42 +25,40 @@ public class TWBMove {
         fillDerivative(posCurve,veloCurve);
         veloCurve.debug = false;
 
-        // Pitch profile to travel 1 cm in 1 sec, 
-        //   using an ... manually derived curve.  Trial and error...
-        pitchCurve.debug = false;
-        fillSineWave(10,time/2.0,4.0,(-Math.PI), Math.PI, false,pitchCurve);
-        //pitchCurve.addElement(0.0,.00);
-        pitchCurve.addElement(time,.00);
-//        pitchVector.addElement(.00,.00);
-//        pitchVector.addElement(.01*time,-2.0); // DOE
-//        //pitchVector.addElement(.02,0.0);
-//        pitchVector.addElement(.25*time,-3.0);  // DOE
-//        //pitchVector.addElement(.95,0.0);
-//        pitchVector.addElement(.4*time,-2.0);   // DOE
-//        pitchVector.addElement(.5*time,0.0);   // DOE
-//        pitchVector.addElement(time,.00);
     }
 
     /**
-     * Specific method that modifies the Pitch Profile for the back-n-forth DOE
-     * @param newYs new values for the pitch piecewise curve, indicated above
+     * IN-WORK. Code not complete
+     * @param dist  distance
+     * @param vMax  velocity maximum
+     * @param aMax  acceleration maximum
      */
-    public void setPitchCurve(double[] newYs) {
-        pitchCurve.setElement(1, pitchCurve.getElementX(1), newYs[0]);
-        pitchCurve.setElement(2, pitchCurve.getElementX(2), newYs[1]);
-        pitchCurve.setElement(3, pitchCurve.getElementX(3), newYs[2]);
+    public void makeTrapizoidMotionProfile(double dist,double vMax, double aMax) {
+        // Check if the triangular profile is needed (cannot reach max velocity)
+        double accelDist = (vMax * vMax) / aMax;
+
+        if (accelDist > dist) {
+            // Triangular profile
+            vMax = Math.sqrt(dist * aMax);
+        }
+
+        double tAccel = vMax / aMax;
+        double dAccel = 0.5 * aMax * tAccel * tAccel;
+        double dCruise = dist - (2.0 * dAccel);
+        double tCruise = dCruise / vMax;
+        double tTotal = (2.0 * tAccel) + tCruise;
+
     }
 
     /**
-     * lineMove method, to be called continuously for the duration of the requested move.
+     * lineMoveLoop method, to be called continuously for the duration of the requested move.
      * Scales the position and pitch curves to the requested values.
      * @param currentTime (seconds) from start of move
      * @param startingS (mm) starting position S
-     * @return array [3] containing posTarget, pitchTarget, and velocityTarget
+     * @return array [3] containing posTarget and velocityTarget
      */
-    public double[] lineMove(double currentTime, double startingS) {
+    public double[] lineMoveLoop(double currentTime, double startingS) {
         double posTarget;
-        double pitchTarget;
         double velocity;
         int sign; // for direction
 
@@ -76,9 +69,7 @@ public class TWBMove {
 
         velocity = sign* veloCurve.getY(currentTime);
 
-        pitchTarget = sign* pitchCurve.getY(currentTime);
-
-        return new double[] {posTarget, pitchTarget, velocity};
+        return new double[] {posTarget, velocity};
     }
 
     /**
@@ -111,6 +102,7 @@ public class TWBMove {
 
     /**
      * Builds a derivative PiecewiseFunction from a given curve, forces both ends to zero slope.
+     * Assumes a uniform x (time) step
      * @param curve PiecewiseFunction
      * @param derivative PiecewiseFunction
      */
@@ -130,23 +122,35 @@ public class TWBMove {
         derivative.addElement(curve.getElementX(pieces),0.0);
     }
 
-    public void newPitchCurveY(double scale) {
-        int points = pitchCurve.getSize();
+    /**
+     * Builds an Integral PiecewiseFunction from a given curve. Starts at zero.
+     *  Assumes a uniform x (time) step
+     * @param curve PiecewiseFunction
+     * @param integral PiecewiseFunction
+     */
+    public void fillIntegral(PiecewiseFunction curve, PiecewiseFunction integral) {
+        int pieces = curve.getSize()-1; // getSize returns points, we need pieces
+        double tStep = curve.getElementX(1)- curve.getElementX(0);
 
-        for(int i=1; i<points; i++) {
-            double newY = pitchCurve.getElementY(i) * scale;
-            pitchCurve.setElement(i,pitchCurve.getElementX(i), newY);
+        integral.addElement(0.0,0.0);
+        double area = ((curve.getElementY(1)+
+                curve.getElementY(0))/2.0) * tStep;
+
+        for (int i=1; i <= pieces; i++) {
+            double nextArea = ((curve.getElementY(i+1)+ curve.getElementY(i))/2.0)/
+                    tStep;
+            area = area + nextArea;
+            integral.addElement(curve.getElementX(i),area);
         }
     }
-    @SuppressLint("DefaultLocale")
-    public void writeTelemetry(OpMode om) {
-        for(int i = 0; i< posCurve.getSize(); i++) {
-//            om.telemetry.addLine(String.format("Move i %d ,t %.1f ,pos %.1f ,velo %.1f,pitch %.1f",
-//                    i, posCurve.getElementX(i), posCurve.getElementY(i), veloCurve.getElementY(i),
-//                    pitchCurve.getElementY(i)));
-            om.telemetry.addLine(String.format("Move i %d ,t %.1f ,pos %.1f ,velo %.1f",
-                    i, posCurve.getElementX(i), posCurve.getElementY(i), veloCurve.getElementY(i)));
-        }
+    /**
+     * Returns the maximum velocity for a robot starting at rest, following a sine profile,
+     * and stopping at the end.
+     * @param distance = distance traveled
+     * @param time = time to travel the distance
+     * @return = the maximum velocity reached during the travel
+     */
+    public double getMaxVelocity(double distance, double time) {
+        return 2.0*distance / time;
     }
-
 }

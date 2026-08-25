@@ -27,8 +27,8 @@ public class TwoWheelBalanceController {
     private final DcMotor rightDrive;
 
     private final TWBOdometry odometry; // two wheel odometry object with running average
-    int leftTicks = 0;
-    int rightTicks = 0;
+    private int leftTicks = 0;
+    private int rightTicks = 0;
     private int leftZeroTicks = 0; // pinpoint does not reset.  have to store zero at start
     private int rightZeroTicks = 0; // pinpoint does not reset.  have to store zero at start
 
@@ -41,9 +41,9 @@ public class TwoWheelBalanceController {
     private double Kpos = 0.0001;  // volts/mm
     private double Kvelo = 0.0001;  // volts/mm/sec
 
-    private double TICKSPERMM = 1; // set in initialization
+    private double TICKSPERMM = 0; // Encoder/drive/wheel Constant. set in initialization
 
-    private boolean revEncoders = false; // reverse sign of encoders?
+    private boolean revEncoders = false; // reverse sign of encoders? Should be in child class
 
     // YAW PID
     private final PIDController yawPID;
@@ -51,14 +51,13 @@ public class TwoWheelBalanceController {
     private double posTarget = 0.0;
     private double sOdom = 0.0; // Current robot position from odometry
 
-    private final double veloTarget = 0.0; // not using velocity target
     private double linearVelocity = 0.0;
 
-    private double maxLinearVelocity = 100.0;  // mm/second.  absolute max velocity
+    private double maxLinearVelocity = 0.0;  // (mm/sec) Calculated based on wheel dia and gear ratio
 
     private double vertCM = 10.0;  // vertical distance mm from the wheel center to the robot center of mass
-    private double autoPitchTarget = 0; // used to set the balance pitch from an auto routine
-    private double armPitchTarget = 0; // for use when the robots CM changes in use, then the balance pitch changes
+    private double zeroPitchTarget = 0; // pitch of the imu when the robot is balanced upright (measure)
+    private double addPitchTarget = 0; // for use when the robots CM changes in use, then the balance pitch changes
     private double pitchTarget = 0;  // The sum of the above two variables
 
     private double pitch = 0;
@@ -68,38 +67,28 @@ public class TwoWheelBalanceController {
     private double yawTarget = 0.0;
     private double yaw = 0;
     private double priorYaw = 0;
-    double rawYaw = 0;
+    private double rawYaw = 0;
     private double rawPriorYaw = 0;
-    double yawRate = 0;
+    private double yawRate = 0;
 
-    public IMU imu;
+    public IMU imu; // Built-in REV IMU.  Should move to child class?
 
-    GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
+    private GoBildaPinpointDriver pinPoint; // goBilda Pinpoint Odometry Computer.  Should move to child class?
 
     private YawPitchRollAngles orientation;   // part of FIRST navigation classes
 
     private double positionVolts = 0.0;
     private double pitchVolts = 0.0;
 
-    private final ElapsedTime runtime = new ElapsedTime(); // Timer used to get loop times
-
-    // The variables below are to try to get a consistent delta time for the controller.
-    // Not sure how well this works. Don't know how to make it better without different runtime env.
-    // Array size was 11 for IMU.  8 with gobilda pinpoint.
-    private final RunningAverageArray deltaTimeRA = new RunningAverageArray(1,false);
-    private double currentTime;
-    private double lastTime;
-    private double deltaTime = 0.04; // initialize, replaced by a running average
-
+    private double deltaTime = 0.02; // keeps the last loop time (seconds)
     private ElapsedTime cycleTimer = new ElapsedTime();
-    private final double TARGET_LOOP_MS = 20.0; // Target 20ms (50Hz)
+    private double TARGET_LOOP_MS = 20.0; // Target 20ms (50Hz). Robot dependant?
 
-    public double MMPLoop = 5.0; // defines the maximum robot velocity (ramp rate)
-    public double DEGPLoop = 0.0; // defines a pitch shift for when the robot moves
+    private double maxAllowedVelocity = 1.0; // defines the maximum robot velocity
+    private double DEGPLoop = 0.0; // defines a pitch shift for when the robot moves
 
     private DatalogTWB datalogTWB; // datalog for full recording
     private boolean writeDatalog = false; // default is no log.  call method to write.
-    //private final boolean fixedLoopTime = false; // not using fixed loop times
 
     /**
      * TWB Constructor.  Call once in initialization.
@@ -120,8 +109,6 @@ public class TwoWheelBalanceController {
                                      double ticksPerMM, double kp, double ki, double kd,
                                      int NVelo, int NDist) {
 
-        deltaTimeRA.add(0.04); // add to running average to smooth the start??
-
         // Define and Initialize Motors
         leftDrive = hardwareMap.get(DcMotor.class, "left_drive");
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
@@ -137,14 +124,14 @@ public class TwoWheelBalanceController {
     }
     public void initializePinpoint(HardwareMap hardwareMap) {
         // initialize the Pinpoint, that has an IMU
-        odo = hardwareMap.get(GoBildaPinpointDriver.class,"odo");
-        odo.setOffsets(0.0, 0.0, DistanceUnit.MM);
-        odo.setEncoderResolution(27.16244, DistanceUnit.MM);
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD,
+        pinPoint = hardwareMap.get(GoBildaPinpointDriver.class,"odo");
+        pinPoint.setOffsets(0.0, 0.0, DistanceUnit.MM);
+        pinPoint.setEncoderResolution(27.16244, DistanceUnit.MM);
+        pinPoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD,
                 GoBildaPinpointDriver.EncoderDirection.FORWARD);
-        odo.resetPosAndIMU(); // recalibrates IMU
-        leftZeroTicks = odo.getEncoderX();
-        rightZeroTicks = odo.getEncoderY();
+        pinPoint.resetPosAndIMU(); // recalibrates IMU
+        leftZeroTicks = pinPoint.getEncoderX();
+        rightZeroTicks = pinPoint.getEncoderY();
     }
     public void setDriveMotors(boolean leftForward, boolean rightForward, boolean reverseEncoders) {
         if(leftForward) leftDrive.setDirection(DcMotor.Direction.FORWARD);
@@ -167,6 +154,12 @@ public class TwoWheelBalanceController {
     }
 
     /**
+     * Returns the Maximum Robot Linear Velocity based on motors, wheels, gearing
+     * @return the robot maximum linear velocity
+     */
+    public double getMaxLinearVelocity() {return maxLinearVelocity;}
+
+    /**
      * setBalanceTerms initializes the four balance controller terms
      * @param kpos K Position  volts/mm
      * @param kvelo K Velocity volts/mm/second
@@ -186,21 +179,16 @@ public class TwoWheelBalanceController {
     public void start() {
         resetMotors();
 
-        // reset the timer
-        runtime.reset();
-        currentTime = runtime.seconds();
-        lastTime = currentTime;
-
+        // reset the loop cycle timer
         cycleTimer.reset();
-
 
         // reset the PIDs
         yawPID.reset();
     }
 
     public void zeroPinpointTicks() {
-        leftZeroTicks = odo.getEncoderX();
-        rightZeroTicks = odo.getEncoderY();
+        leftZeroTicks = pinPoint.getEncoderX();
+        rightZeroTicks = pinPoint.getEncoderY();
     }
     private void resetMotors() {
         // reset the encoders
@@ -216,16 +204,8 @@ public class TwoWheelBalanceController {
      * Teleoperated inputs are removed from this method, so it can be called in autonomous.
       */
     public void loop(OpMode theOpmode) {
-        //if (fixedLoopTime) deltaTime = 0.015; // experiment to see if we can make velocity smoother
-        //else
-        cycleTimer.reset();
 
-        setLoopTime(); // this updates the deltaTime value
-
-
-        // --- Put your main robot logic, sensor reads, and motor writes here ---
-
-
+        //cycleTimer.reset();
 
         updateTicks();
 
@@ -241,7 +221,7 @@ public class TwoWheelBalanceController {
         double posError = sOdom - posTarget;
         positionVolts = Kvelo * linearVelocity + Kpos * posError;
 
-        pitchTarget = armPitchTarget + autoPitchTarget;
+        pitchTarget = zeroPitchTarget + addPitchTarget;
         double pitchError = pitch - pitchTarget;
 
         pitchVolts = Kpitch * pitchError + KpitchRate * pitchRATE;
@@ -263,7 +243,7 @@ public class TwoWheelBalanceController {
 
         if (writeDatalog) {
             datalogTWB.logPosPitch(getPos(), getPosTarget(),
-                    getVelocity(), getVeloTarget(),getPitch(),
+                    getVelocity(), getAcceleration(),getPitch(),
                     getPitchTarget(), getPitchRate(), getYaw(),getYawTarget(),
                     getPositionVolts(),getPitchVolts(), getDeltaTime());
             datalogTWB.writeLineTWB();
@@ -274,6 +254,9 @@ public class TwoWheelBalanceController {
             // Yield thread slightly to prevent maxing out CPU completely
             Thread.yield();
         }
+        deltaTime = cycleTimer.seconds(); // save last loop time for other processes
+        cycleTimer.reset();
+
     }
     public void makeYawContinuous() {
         // The following controls the turn (yaw) of the robot
@@ -301,16 +284,7 @@ public class TwoWheelBalanceController {
         orientation = imu.getRobotYawPitchRollAngles();
         pitch = orientation.getPitch(AngleUnit.DEGREES);
     }
-    private void setLoopTime () {
-        // compute a loop time.  Using running average to smooth values
-        lastTime = currentTime;
-        currentTime = runtime.seconds();
-        double dT = currentTime - lastTime;
-        //if(dT > 0.07) dT = 0.07; // fake!
-        // add the new delta time to the running average
-        deltaTimeRA.add(dT);
-        deltaTime = deltaTimeRA.getAverage();
-    }
+
     public void updateTicks() {
         if (revEncoders) {
             leftTicks = -leftDrive.getCurrentPosition();
@@ -321,9 +295,9 @@ public class TwoWheelBalanceController {
         }
     }
     public void updateTicksPinpoint() {
-        odo.update(); // Update the pinpoint values for the following calls
-        leftTicks = odo.getEncoderX()-leftZeroTicks;
-        rightTicks = odo.getEncoderY()-rightZeroTicks;
+        pinPoint.update(); // Update the pinpoint values for the following calls
+        leftTicks = pinPoint.getEncoderX()-leftZeroTicks;
+        rightTicks = pinPoint.getEncoderY()-rightZeroTicks;
     }
     public void updatePitchYaw() {
         // get pitch and pitch rate values from the IMU
@@ -336,12 +310,12 @@ public class TwoWheelBalanceController {
         rawYaw = orientation.getYaw(AngleUnit.RADIANS);
     }
     public void updatePitchYawPinpoint() {
-        pitch = odo.getPitch(AngleUnit.DEGREES);
+        pitch = pinPoint.getPitch(AngleUnit.DEGREES);
         pitchRATE = (pitch- oldPitch)/deltaTime;
         oldPitch = pitch;
 
-        yaw = -odo.getHeading(UnnormalizedAngleUnit.RADIANS);
-        yawRate = odo.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS);
+        yaw = -pinPoint.getHeading(UnnormalizedAngleUnit.RADIANS);
+        yawRate = pinPoint.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS);
     }
     public void writeDatalog(String LogName) {
         this.writeDatalog=true;
@@ -359,29 +333,28 @@ public class TwoWheelBalanceController {
 
     /**
      * TWB method translates the robot by setting Position & Pitch Targets.
-     *  Recommend using BackNForth_DOE Opmode to determine mmPerLoop and degPerLoop
-     * @param forward value from -1 to 1 that is the forward or backward amount
-     * @param mmPerLoop robot translation in mm per loop, multiplied by forward
+     * @param forward    value from -1 to 1 that is the forward or backward amount
      * @param degPerLoop robot pitch degrees per loop, multiplied by forward
      */
-    public void translateDrive(double forward, double mmPerLoop, double degPerLoop) {
+    public void translateDrive(double forward, double degPerLoop) {
         // add small pitch to get it moving. Determine with BackNForth_DOE
-        setAutoPitchTarget(forward * degPerLoop);
+        setZeroPitchTarget(forward * degPerLoop);
 
-        // Update posTarget (mm) Note: this value / deltatime = mm per second
-        // mmPerLoop of 7 results in a gentle speed
-        setPosTarget( getPosTarget() - forward * mmPerLoop );
+        // Update posTarget (mm)
+        setPosTarget( getPosTarget() - forward * maxAllowedVelocity * getDeltaTime() );
     }
+    public void setTARGET_LOOP_MS(double targetLoopMs) {TARGET_LOOP_MS = targetLoopMs;}
     public double getDeltaTime() {return deltaTime;}
     public double getPitchTarget() {return pitchTarget;}
     public void setPosTarget(double pos) {posTarget = pos;}
     public double getPos() {return sOdom;}
     public double getPosTarget() {return posTarget;}
-    //public void setVeloTarget(double velo) {veloTarget = velo;}
-    public double getVeloTarget() {return veloTarget;}
+    public double getAcceleration() {return odometry.getAcceleration();}
     public double getVelocity() {return linearVelocity;}
-    public void setArmPitchTarget (double target) { armPitchTarget = target;   }
-    public void setAutoPitchTarget (double target) { autoPitchTarget = target;   }
+    public void setAddPitchTarget(double target) { addPitchTarget = target;   }
+    public void setZeroPitchTarget(double target) { zeroPitchTarget = target;   }
+
+    public double getZeroPitchTarget() {return zeroPitchTarget;}
     public void setYawTarget(double yaw) { yawTarget = yaw; }
     public double getYawTarget() {return yawTarget;}
     public double getPositionVolts() { return positionVolts;}
@@ -396,6 +369,11 @@ public class TwoWheelBalanceController {
     public void setKvelo(double k) {Kvelo = k;}
     public double getYaw() {return yaw; }
     public double getPitch() { return pitch;}
+
+    /**
+     * This call is much slower than getPitch!
+     * @return a recently read imu pitch value
+     */
     public double getNewPitch() {
         // get values from the IMU.  Much slower than getPitch.
         orientation = imu.getRobotYawPitchRollAngles();
@@ -407,9 +385,9 @@ public class TwoWheelBalanceController {
     //public  int getRightTicks() {return rightTicks;}
     public double getVerticalCM() {return vertCM;}
     public void setVerticalCM(double verticalCM) {vertCM = verticalCM;}
-    //public void setFixedLoopTIme() {fixedLoopTime = true;}
-    public void setMMPLoop(double mmpLoop) {MMPLoop = mmpLoop;}
+    public void setMaxAllowedVelocity(double maxVelo) {
+        maxAllowedVelocity = maxVelo;}
     public void setDEGPLoop(double degpLoop) {DEGPLoop = degpLoop;}
-    public double getMMPLoop() {return MMPLoop;}
+    public double getMaxAllowedVelocity() {return maxAllowedVelocity;}
     public double getDEGPLoop() {return DEGPLoop;}
 }

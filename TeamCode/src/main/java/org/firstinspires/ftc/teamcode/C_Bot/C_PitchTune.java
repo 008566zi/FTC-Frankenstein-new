@@ -6,6 +6,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.RunningAverageArray;
 
+import java.util.Locale;
+
 /**
  * This Iterative Design of Experiments OpMode is for a Two Wheel Balancing Robot.
  *  Use it to find the pitch angle when the robot is at a zero position target.
@@ -41,8 +43,8 @@ public class C_PitchTune extends OpMode {
     @Override
     public void init_loop() {
         twb.init_loop();
-        telemetry.addLine("Opmode to tune Pitch-Zero: so position is zero");
-        telemetry.addLine(" and to tune Vertical Center of Mass: to minimize oscillation:");
+        telemetry.addLine("Tune Zero-Pitch-Target so average position is zero");
+        telemetry.addLine("Tune Vertical-Center-of-Mass so oscillations are zero");
         telemetry.update();
     }
 
@@ -51,7 +53,9 @@ public class C_PitchTune extends OpMode {
      */
     @Override
     public void start() {
+
         twb.start();
+        pitchFuzz = twb.getZeroPitchTarget();
     }
 
     /**
@@ -61,7 +65,7 @@ public class C_PitchTune extends OpMode {
     public void loop() {
         if (gamepad1.dpadUpWasPressed()) pitchFuzz += 0.1;
         else if (gamepad1.dpadDownWasPressed()) pitchFuzz -= 0.1;
-        twb.setAutoPitchTarget(pitchFuzz);
+        twb.setZeroPitchTarget(pitchFuzz);
 
         if (gamepad1.dpadLeftWasPressed()) twb.setVerticalCM(twb.getVerticalCM()+1.0);
         else if (gamepad1.dpadRightWasPressed()) twb.setVerticalCM(twb.getVerticalCM()-1.0);
@@ -74,15 +78,16 @@ public class C_PitchTune extends OpMode {
         twb.loopC(this);  // call balance control system
 
         robotPos.add(twb.getPos()); // for telemetry only
-        telemetry.addData("Robot Position (mm) (Averaged)","  %.1f", robotPos.getAverage());
 
-        telemetry.addData("Robot Pitch TARGET (deg)"," %.1f", twb.getPitchTarget());
-        telemetry.addData("DPAD UP+ DOWN- Pitch Adjust (deg)"," %.1f", pitchFuzz);
+        telemetry.addData("Robot AVERAGE Position (mm)","  %.1f", robotPos.getAverage());
+        telemetry.addLine(String.format(Locale.US, "s Position Target %.1f ,Current %.1f (mm)",
+                twb.getPosTarget(),twb.getPos()));
+        telemetry.addLine(" ---");
+        telemetry.addData("DPAD UP+ DOWN- Zero-Pitch-Target Adjust (deg)"," %.1f", pitchFuzz);
         telemetry.addLine(" ---");
         telemetry.addData("Robot Vertical Center of Mass (mm)"," %.1f", twb.getVerticalCM());
         telemetry.addLine("DPAD LEFT+ RIGHT-  VertCM Adjust");
         telemetry.addLine(" ---");
-        twb.writeTelemetry(this);
 
         telemetry.update();
     }

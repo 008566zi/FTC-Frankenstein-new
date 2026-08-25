@@ -73,7 +73,7 @@ public class Blue_Tele extends OpMode
         joystickS.add(gamepad1.left_stick_y * (1 + gamepad1.left_trigger));
 
         // Translate the robot by setting position, velocity and pitch targets
-        twb.translateDrive(joystickS.getAverage(),twb.MMPLoop,twb.DEGPLoop);
+        twb.translateDrive(joystickS.getAverage(), twb.getDEGPLoop());
 
         // Either joystick can turn the robot.  Different speeds. Sets yaw target
         twb.turn_teleop(gamepad1.left_stick_x * 0.03);

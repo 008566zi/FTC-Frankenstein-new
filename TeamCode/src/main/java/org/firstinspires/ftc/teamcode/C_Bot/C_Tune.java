@@ -41,7 +41,9 @@ public class C_Tune extends OpMode
     @Override
     public void init_loop() {
         telemetry.addLine("INIT LOOP");
-        tuneKterms();
+        // allow for variation of the max velocity
+        twb.setMaxSpeedGamepad(this);
+        //tuneKterms();
         twb.init_loop();
         twb.writeTelemetry(this);
         telemetry.update();
@@ -75,7 +77,7 @@ public class C_Tune extends OpMode
         joystickS.add(gamepad1.left_stick_y * (1 + gamepad1.left_trigger/2.0));
 
         // Translate the robot by setting position, velocity and pitch targets
-        twb.translateDrive(joystickS.getAverage(),twb.MMPLoop,twb.DEGPLoop);
+        twb.translateDrive(joystickS.getAverage(), twb.getDEGPLoop());
 
         // Either joystick can turn the robot.  Different speeds. Sets yaw target
         twb.turn_teleop(-gamepad1.left_stick_x * 0.03);
@@ -88,8 +90,8 @@ public class C_Tune extends OpMode
             else  twb.moveGearDown();
         }
 
-        twb.writeTelemetry(this);
-        telemetry.update();
+        //twb.writeTelemetry(this);
+        //telemetry.update();
     }
 
     /**
@@ -117,17 +119,5 @@ public class C_Tune extends OpMode
         telemetry.addLine(" --- ");
 
     }
-    /**
-     * TWB method to provide buttons for tuning drive terms.
-     */
-    public void tuneDriveTerms() {
-        if (gamepad1.dpadUpWasPressed()) twb.MMPLoop+=0.5;
-        else if (gamepad1.dpadDownWasPressed()) twb.MMPLoop-=0.5;
 
-        else if (gamepad1.dpadLeftWasPressed()) twb.DEGPLoop+=0.5;
-        else if (gamepad1.dpadRightWasPressed()) twb.DEGPLoop-=0.5;
-
-        telemetry.addData("MM/Loop   DPAD +UP -DOWN", twb.MMPLoop);
-        telemetry.addData("DEG/Loop  DPAD +LEFT -RIGHT", twb.DEGPLoop);
-    }
 }

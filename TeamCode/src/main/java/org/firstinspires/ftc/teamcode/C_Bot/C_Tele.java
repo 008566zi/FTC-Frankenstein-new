@@ -60,12 +60,17 @@ public class C_Tele extends OpMode
         //if (gamepad1.y) twb.shootFlywheel();
         if (gamepad1.leftBumperWasReleased()) twb.flywheelOff();
 
+        // allow for variation of the max velocity
+        twb.setMaxSpeedGamepad(this);
+
         // Use running average of the joystick to smooth aggressive inputs.
+        joystickS.add(gamepad1.left_stick_y);
+
         // The left trigger is a speed booster
-        joystickS.add(gamepad1.left_stick_y * (1 + gamepad1.left_trigger/2.0));
+        //joystickS.add(gamepad1.left_stick_y * (1 + gamepad1.left_trigger/2.0));
 
         // Translate the robot by setting position, velocity and pitch targets
-        twb.translateDrive(joystickS.getAverage(),twb.MMPLoop,twb.DEGPLoop);
+        twb.translateDrive(joystickS.getAverage(), twb.getDEGPLoop());
 
         // Either joystick can turn the robot.  Different speeds. Sets yaw target
         twb.turn_teleop(-gamepad1.left_stick_x * 0.03);
@@ -78,7 +83,7 @@ public class C_Tele extends OpMode
             else  twb.moveGearDown();
         }
 
-        twb.writeTelemetry(this);
+        //twb.writeTelemetry(this);
         telemetry.update();
     }
 }

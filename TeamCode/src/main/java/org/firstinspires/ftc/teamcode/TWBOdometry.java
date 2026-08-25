@@ -26,7 +26,10 @@ public class TWBOdometry {
 
     private double linearVelocity = 0.0;
     final private RunningAverageArray veloAvg;   // Running average of linear velocity
-    
+
+    private double acceleration = 0.0;
+    private double lastVelo = 0.0;
+    final private RunningAverageArray accelerationAvg; // Running average of acceleration
     final private RunningAverageArray leftDistAvg; // Running average of left encoder
     final private RunningAverageArray rightDistAvg; // Running average of left encoder
 
@@ -45,6 +48,7 @@ public class TWBOdometry {
 
         // initialize the running averages with zeros to smooth out the startup
         this.veloAvg = new RunningAverageArray(Nvelo,true);
+        this.accelerationAvg = new RunningAverageArray(3,true);
         this.leftDistAvg = new RunningAverageArray(Ndist,true);
         this.rightDistAvg = new RunningAverageArray(Ndist,true);
     }
@@ -95,11 +99,16 @@ public class TWBOdometry {
         deltaTheta = (deltaLeft- deltaRight) / wheelBase;
         //deltaTheta = Math.atan2((deltaLeft- deltaRight),wheelBase); // more accurate, but not much
 
-        // Calculate the average distance traveled
+        // Calculate the average velocity
         deltaDistance = (deltaLeft + deltaRight) / 2;
         s += deltaDistance;
         linearVelocity = deltaDistance/timeChange;
         veloAvg.add(linearVelocity); // add to the running average
+
+        // calculate the average acceleration
+        acceleration = (veloAvg.getAverage() - lastVelo)/timeChange;
+        accelerationAvg.add(acceleration);
+        lastVelo = veloAvg.getAverage();
 
         // Update the position and orientation
         if (deltaTheta == 0) {
@@ -125,6 +134,8 @@ public class TWBOdometry {
     public double getS() {
         return s;
     }
+    public double getX() { return x;}
+    public double getY() { return y;}
     public double getTheta() {
         return -noNormalTheta;
     }
@@ -134,4 +145,5 @@ public class TWBOdometry {
     public double getAvgLinearVelocity() {
         return veloAvg.getAverage();
     }
+    public double getAcceleration() {return accelerationAvg.getAverage();}
 }

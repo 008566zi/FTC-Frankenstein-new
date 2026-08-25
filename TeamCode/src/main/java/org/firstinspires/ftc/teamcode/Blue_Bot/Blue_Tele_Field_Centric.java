@@ -88,7 +88,7 @@ public class Blue_Tele_Field_Centric extends OpMode
             }
         }
 
-        twb.translateDrive(-speed.getAverage(),twb.MMPLoop,twb.DEGPLoop);
+        twb.translateDrive(-speed.getAverage(), twb.getDEGPLoop());
 
         twb.turn_teleop(gamepad1.right_stick_x * 0.04); // also can turn this way
 
