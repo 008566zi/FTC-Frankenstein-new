@@ -170,7 +170,7 @@ public class C_BackNForth_DOE extends OpMode {
             term2.resetSum();
         }
         // Translate the robot
-        twb.translateDrive(virtualJoystick, twb.getDEGPLoop());
+        twb.translateDrive(virtualJoystick);
 
         twb.loopC(this);  // CALL MAIN TWB CONTROL SYSTEM
 

@@ -62,5 +62,20 @@ public class RunningAverageArray {
         }
         return sum / size;
     }
+    public double getStandardDeviation() {
+        if (window.length == 0) return 0.0;
+
+        // 1. Calculate the mean (average)
+        double mean = sum / window.length;
+
+        // 2. Calculate sum of squared differences
+        double squaredDiffSum = 0.0;
+        for (double num : window) {
+            squaredDiffSum += Math.pow(num - mean, 2);
+        }
+
+        // 3. Take the square root of the average of squared differences
+        return Math.sqrt(squaredDiffSum / window.length);
+    }
 }
 

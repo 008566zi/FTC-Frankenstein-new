@@ -77,7 +77,7 @@ public class C_Tune extends OpMode
         joystickS.add(gamepad1.left_stick_y * (1 + gamepad1.left_trigger/2.0));
 
         // Translate the robot by setting position, velocity and pitch targets
-        twb.translateDrive(joystickS.getAverage(), twb.getDEGPLoop());
+        twb.translateDrive(joystickS.getAverage());
 
         // Either joystick can turn the robot.  Different speeds. Sets yaw target
         twb.turn_teleop(-gamepad1.left_stick_x * 0.03);

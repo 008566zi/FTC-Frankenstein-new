@@ -55,9 +55,8 @@ public class C_TWB extends TwoWheelBalanceController {
 
         setTARGET_LOOP_MS(20.0); // This has been tested and seems good
         setMaxAllowedVelocity(500.0);
-        setDEGPLoop(-0.5);
 
-        setAddPitchTarget(-0.5); // zero angle, degrees, measure with C_Pitch_Fuzz opmode
+        setZeroPitchTarget(-0.5); // zero angle, degrees, measure with PitchTune opmode
 
         setVerticalCM(130.0); // mm
 
@@ -165,7 +164,7 @@ public class C_TWB extends TwoWheelBalanceController {
 
     public void setMaxSpeedGamepad(OpMode om) {
 
-        double maxVelo = getMaxAllowedVelocity() / getDeltaTime();
+        double maxVelo = getMaxAllowedVelocity();
 
         if (om.gamepad1.dpadUpWasPressed()) maxVelo += 10.0;
         else if (om.gamepad1.dpadDownWasPressed()) maxVelo -= 10.0;
@@ -173,7 +172,7 @@ public class C_TWB extends TwoWheelBalanceController {
         if (maxVelo < 20.0) maxVelo = 20.0;
         else if (maxVelo > getMaxLinearVelocity()) maxVelo = getMaxLinearVelocity();
 
-        setMaxAllowedVelocity(maxVelo*getDeltaTime());
+        setMaxAllowedVelocity(maxVelo);
 
         om.telemetry.addLine("DPAD UP - DOWN Adjusts the Maximum Velocity");
         om.telemetry.addLine(" --- ");
@@ -182,9 +181,9 @@ public class C_TWB extends TwoWheelBalanceController {
         om.telemetry.update();
     }
     public void writeTelemetry(OpMode om) {
-        om.telemetry.addLine(String.format(Locale.US, "s Position Target %.1f ,Current %.1f (mm)",
+        om.telemetry.addLine(String.format(Locale.US, "s Position Target %.0f ,Current %.0f (mm)",
                 getPosTarget(),getPos()));
-        om.telemetry.addLine(String.format(Locale.US, "s Velocity Target %.1f ,Current %.1f (mm/sec)",
+        om.telemetry.addLine(String.format(Locale.US, "s Velocity Target %.0f ,Current %.0f (mm/sec)",
                 getAcceleration(),getVelocity()));
         om.telemetry.addLine(String.format(Locale.US, "Pitch Target %.1f ,Current %.1f (DEGREES)",
                 getPitchTarget(),getPitch()));

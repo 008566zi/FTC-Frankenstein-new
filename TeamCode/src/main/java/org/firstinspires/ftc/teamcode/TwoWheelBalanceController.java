@@ -60,7 +60,7 @@ public class TwoWheelBalanceController {
     private double addPitchTarget = 0; // for use when the robots CM changes in use, then the balance pitch changes
     private double pitchTarget = 0;  // The sum of the above two variables
 
-    private double pitch = 0;
+    private double pitch = 0;  // degrees
     private double oldPitch = 0;
     private double pitchRATE = 0;
 
@@ -81,11 +81,10 @@ public class TwoWheelBalanceController {
     private double pitchVolts = 0.0;
 
     private double deltaTime = 0.02; // keeps the last loop time (seconds)
-    private ElapsedTime cycleTimer = new ElapsedTime();
+    private final ElapsedTime cycleTimer = new ElapsedTime();
     private double TARGET_LOOP_MS = 20.0; // Target 20ms (50Hz). Robot dependant?
 
     private double maxAllowedVelocity = 1.0; // defines the maximum robot velocity
-    private double DEGPLoop = 0.0; // defines a pitch shift for when the robot moves
 
     private DatalogTWB datalogTWB; // datalog for full recording
     private boolean writeDatalog = false; // default is no log.  call method to write.
@@ -333,12 +332,10 @@ public class TwoWheelBalanceController {
 
     /**
      * TWB method translates the robot by setting Position & Pitch Targets.
-     * @param forward    value from -1 to 1 that is the forward or backward amount
-     * @param degPerLoop robot pitch degrees per loop, multiplied by forward
+     *
+     * @param forward value from -1 to 1 that is the forward or backward amount
      */
-    public void translateDrive(double forward, double degPerLoop) {
-        // add small pitch to get it moving. Determine with BackNForth_DOE
-        setZeroPitchTarget(forward * degPerLoop);
+    public void translateDrive(double forward) {
 
         // Update posTarget (mm)
         setPosTarget( getPosTarget() - forward * maxAllowedVelocity * getDeltaTime() );
@@ -387,7 +384,5 @@ public class TwoWheelBalanceController {
     public void setVerticalCM(double verticalCM) {vertCM = verticalCM;}
     public void setMaxAllowedVelocity(double maxVelo) {
         maxAllowedVelocity = maxVelo;}
-    public void setDEGPLoop(double degpLoop) {DEGPLoop = degpLoop;}
     public double getMaxAllowedVelocity() {return maxAllowedVelocity;}
-    public double getDEGPLoop() {return DEGPLoop;}
 }

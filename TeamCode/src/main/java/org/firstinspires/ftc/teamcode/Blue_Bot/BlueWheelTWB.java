@@ -62,9 +62,10 @@ public class BlueWheelTWB extends TwoWheelBalanceController{
 
         setTARGET_LOOP_MS(20.0); // need to test this for a good value
         setMaxAllowedVelocity(500.0);
-        setDEGPLoop(0.5);
 
         setDriveMotors(false, true, false);
+
+        setZeroPitchTarget(-0.5); // zero angle, degrees, measure with PitchTune opmode
 
         setVerticalCM(92.0);  // mm
 

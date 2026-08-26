@@ -69,7 +69,7 @@ public class Blue_Tune extends OpMode
         joystickS.add(gamepad1.left_stick_y * (1 + gamepad1.left_trigger));
 
         // Translate the robot by setting position, velocity and pitch targets
-        twb.translateDrive(joystickS.getAverage(), twb.getDEGPLoop());
+        twb.translateDrive(joystickS.getAverage());
 
         // Either joystick can turn the robot.  Different speeds. Sets yaw target
         twb.turn_teleop(gamepad1.left_stick_x * 0.03);
@@ -123,6 +123,5 @@ public class Blue_Tune extends OpMode
         //else if (gamepad1.dpadRightWasPressed()) twb.DEGPLoop-=0.5;
 
         telemetry.addData("MM/Loop   DPAD +UP -DOWN", twb.getMaxAllowedVelocity());
-        telemetry.addData("DEG/Loop  DPAD +LEFT -RIGHT", twb.getDEGPLoop());
     }
 }

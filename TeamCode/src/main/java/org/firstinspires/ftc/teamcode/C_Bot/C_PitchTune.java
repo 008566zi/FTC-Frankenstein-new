@@ -31,7 +31,7 @@ public class C_PitchTune extends OpMode {
 
         twb.writeDatalog("C_PitchZero"); // default log
 
-        robotPos = new RunningAverageArray(250,true); // for robot position telemetry
+        robotPos = new RunningAverageArray(150,true); // for robot position telemetry
 
         twb.init();
     }
@@ -44,7 +44,10 @@ public class C_PitchTune extends OpMode {
     public void init_loop() {
         twb.init_loop();
         telemetry.addLine("Tune Zero-Pitch-Target so average position is zero");
-        telemetry.addLine("Tune Vertical-Center-of-Mass so oscillations are zero");
+        telemetry.addLine(" ---");
+        telemetry.addLine("Tune Vertical-Center-of-Mass so Std Dev is near zero");
+        telemetry.addLine(" ---");
+        telemetry.addLine("WAIT THREE SECONDS BETWEEN CHANGES FOR NUMBERS TO STABILIZE");
         telemetry.update();
     }
 
@@ -77,14 +80,15 @@ public class C_PitchTune extends OpMode {
 
         twb.loopC(this);  // call balance control system
 
-        robotPos.add(twb.getPos()); // for telemetry only
+        robotPos.add(twb.getPos()); // add to running average, for telemetry only
 
-        telemetry.addData("Robot AVERAGE Position (mm)","  %.1f", robotPos.getAverage());
-        telemetry.addLine(String.format(Locale.US, "s Position Target %.1f ,Current %.1f (mm)",
+        telemetry.addLine(String.format(Locale.US, "s Position Target %.0f ,Current %.0f (mm)",
                 twb.getPosTarget(),twb.getPos()));
         telemetry.addLine(" ---");
+        telemetry.addData("AVERAGE Position (mm)","  %.0f", robotPos.getAverage());
         telemetry.addData("DPAD UP+ DOWN- Zero-Pitch-Target Adjust (deg)"," %.1f", pitchFuzz);
         telemetry.addLine(" ---");
+        telemetry.addData("Position Standard Deviation (mm)","  %.1f", robotPos.getStandardDeviation());
         telemetry.addData("Robot Vertical Center of Mass (mm)"," %.1f", twb.getVerticalCM());
         telemetry.addLine("DPAD LEFT+ RIGHT-  VertCM Adjust");
         telemetry.addLine(" ---");

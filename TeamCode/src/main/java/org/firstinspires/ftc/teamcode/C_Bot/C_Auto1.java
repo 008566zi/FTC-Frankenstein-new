@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.MoveProfiles;
 @Autonomous(name="C Auto 1")
 public class C_Auto1 extends OpMode {
     private C_TWB twb;
-    private double DIST = 500; // mm
+    private double DIST = 501; // mm
     private double TIME = 2.0; // sec
     private MoveProfiles myTWBmoves;
     final private ElapsedTime moveTimer = new ElapsedTime();
@@ -45,15 +45,14 @@ public class C_Auto1 extends OpMode {
 
     @Override
     public void init_loop() {
-        telemetry.addLine("Move robot back and forth ");
+        telemetry.addLine("Set a Distance for robot to move back and forth ");
         telemetry.addLine(" --- ");
 
         if (gamepad1.dpadUpWasPressed()) DIST += 100.0;
-        else if (gamepad1.dpadDownWasPressed()) DIST -= 100.0;
+        else if (gamepad1.dpadDownWasPressed() && DIST > 0) DIST -= 100.0;
 
-        if (gamepad1.dpadLeftWasPressed()) TIME += 0.25;
-        else if (gamepad1.dpadRightWasPressed()) TIME -= 0.25;
-
+        // NEED TO GET THE TIME!!!
+        
         double maxVelo = myTWBmoves.getMaxVelocity(DIST, TIME); // max move velocity
 
         if (maxVelo > twb.getMaxLinearVelocity()) {
@@ -62,7 +61,7 @@ public class C_Auto1 extends OpMode {
 
         telemetry.addLine("DPAD UP - DOWN Adjusts the distance");
         telemetry.addData("Travel Distance (mm)"," %.1f", DIST);
-        telemetry.addLine("DPAD LEFT - RIGHT Adjusts the time");
+        telemetry.addLine(" --- ");
         telemetry.addData("Travel Time (seconds) =", TIME);
         telemetry.addLine(" --- ");
         telemetry.addData("Max MOVE Velocity (mm/sec)"," %.1f", maxVelo);
