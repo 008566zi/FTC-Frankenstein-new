@@ -38,8 +38,6 @@ public class C_Auto1 extends OpMode {
 
         twb.writeDatalog("CLogAutoBnF");
 
-        myTWBmoves = new MoveProfiles(TIME,DIST);
-
         twb.moveGearDown();
     }
 
@@ -51,13 +49,16 @@ public class C_Auto1 extends OpMode {
         if (gamepad1.dpadUpWasPressed()) DIST += 100.0;
         else if (gamepad1.dpadDownWasPressed() && DIST > 0) DIST -= 100.0;
 
-        // NEED TO GET THE TIME!!!
-        
-        double maxVelo = myTWBmoves.getMaxVelocity(DIST, TIME); // max move velocity
+        // TIME TO ACCELERATE TO MAX VELOCITY AND DECELERATE
+        //TIME = 2.0 * (twb.getMaxAllowedVelocity()/twb.getMaxAllowedAccel());
 
-        if (maxVelo > twb.getMaxLinearVelocity()) {
-            DIST = twb.getMaxLinearVelocity() / TIME; // adjust the distance based on the time
-        }
+        //double distMaxV = twb.getMaxAllowedAccel() * TIME*TIME;
+        
+        double maxVelo = getMaxVelocity(DIST, TIME); // max move velocity
+
+        //if (maxVelo > twb.getMaxLinearVelocity()) {
+            //DIST = twb.getMaxLinearVelocity() / TIME; // adjust the distance based on the time
+        //}
 
         telemetry.addLine("DPAD UP - DOWN Adjusts the distance");
         telemetry.addData("Travel Distance (mm)"," %.1f", DIST);
@@ -81,6 +82,8 @@ public class C_Auto1 extends OpMode {
 
     @Override
     public void loop() {
+        twb.startCycleTImer();
+
         double[] newTargets;
 
         double SETTLE_TIME = 2.0; // seconds
@@ -124,7 +127,7 @@ public class C_Auto1 extends OpMode {
                  }
                 break;
             case GEARDOWN:
-                if (moveTimer.seconds() <= 0.05)
+                if (moveTimer.seconds() <= 0.03)
                     twb.moveGearDown();
                 else if (moveTimer.seconds() > GEARDOWNTIME)
                     requestOpModeStop();
@@ -135,5 +138,15 @@ public class C_Auto1 extends OpMode {
 
         telemetry.addData("State",state);
         telemetry.update();
+    }
+    /**
+     * Returns the maximum velocity for a robot starting at rest, following a sine profile,
+     * and stopping at the end.
+     * @param distance = distance traveled
+     * @param time = time to travel the distance
+     * @return = the maximum velocity reached during the travel
+     */
+    public double getMaxVelocity(double distance, double time) {
+        return 2.0*distance / time;
     }
 }

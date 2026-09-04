@@ -54,7 +54,8 @@ public class TwoWheelBalanceController {
     private double linearVelocity = 0.0;
 
     private double maxLinearVelocity = 0.0;  // (mm/sec) Calculated based on wheel dia and gear ratio
-
+    private double maxAllowedVelocity = 1.0; // defines the maximum robot velocity
+    private double maxAllowedAccel = 1.0; // maximum allowed robot acceleration
     private double vertCM = 10.0;  // vertical distance mm from the wheel center to the robot center of mass
     private double zeroPitchTarget = 0; // pitch of the imu when the robot is balanced upright (measure)
     private double addPitchTarget = 0; // for use when the robots CM changes in use, then the balance pitch changes
@@ -84,10 +85,12 @@ public class TwoWheelBalanceController {
     private final ElapsedTime cycleTimer = new ElapsedTime();
     private double TARGET_LOOP_MS = 20.0; // Target 20ms (50Hz). Robot dependant?
 
-    private double maxAllowedVelocity = 1.0; // defines the maximum robot velocity
+
 
     private DatalogTWB datalogTWB; // datalog for full recording
     private boolean writeDatalog = false; // default is no log.  call method to write.
+
+    private final RunningAverageArray joystickS; // to smooth aggressive joystick inputs
 
     /**
      * TWB Constructor.  Call once in initialization.
@@ -120,6 +123,10 @@ public class TwoWheelBalanceController {
         yawPID = new PIDController(kp, ki, kd);
 
         yawPID.setSetpoint(0.0);    // initial yaw (yawTarget) is zero.
+
+        maxAllowedAccel = 1500; // based on testing (mm/sec^2)
+
+        joystickS = new RunningAverageArray(30,true); // initialize size of running average
     }
     public void initializePinpoint(HardwareMap hardwareMap) {
         // initialize the Pinpoint, that has an IMU
@@ -198,13 +205,18 @@ public class TwoWheelBalanceController {
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
+
+    /** Call this at the beginning of loop()
+     * This must be called at the start of the loop to get accurate loop cycle times.
+     */
+    public void startCycleTImer() {
+        cycleTimer.reset();
+    }
     /**
      * TWB Main Loop method.  Call repeatedly while running. Contains balance control logic.
      * Teleoperated inputs are removed from this method, so it can be called in autonomous.
       */
     public void loop(OpMode theOpmode) {
-
-        //cycleTimer.reset();
 
         updateTicks();
 
@@ -236,12 +248,12 @@ public class TwoWheelBalanceController {
         rightDrive.setPower(totalPowerVolts  + yawPower);
 
         // kill the robot if it pitches over too far or runs fast when not asked to
-        if ((Math.abs(pitch) > 60.0)  || (Math.abs(linearVelocity) > 1.5*maxLinearVelocity)) {
+        if ((Math.abs(pitch) > 28.0)  || (Math.abs(linearVelocity) > 1.3*maxLinearVelocity)) {
             theOpmode.requestOpModeStop(); // Stop the opmode
         }
 
         if (writeDatalog) {
-            datalogTWB.logPosPitch(getPos(), getPosTarget(),
+            datalogTWB.logPosPitch(getPos(), odometry.getX(), odometry.getY(), getPosTarget(),
                     getVelocity(), getAcceleration(),getPitch(),
                     getPitchTarget(), getPitchRate(), getYaw(),getYawTarget(),
                     getPositionVolts(),getPitchVolts(), getDeltaTime());
@@ -254,7 +266,7 @@ public class TwoWheelBalanceController {
             Thread.yield();
         }
         deltaTime = cycleTimer.seconds(); // save last loop time for other processes
-        cycleTimer.reset();
+        //cycleTimer.reset();
 
     }
     public void makeYawContinuous() {
@@ -333,12 +345,13 @@ public class TwoWheelBalanceController {
     /**
      * TWB method translates the robot by setting Position & Pitch Targets.
      *
-     * @param forward value from -1 to 1 that is the forward or backward amount
+     * @param gamepadStick value from -1 to 1 that is the forward or backward amount
      */
-    public void translateDrive(double forward) {
-
+    public void translateDrive(double gamepadStick) {
+        // Use running average of the joystick to smooth aggressive inputs.
+        joystickS.add(gamepadStick);
         // Update posTarget (mm)
-        setPosTarget( getPosTarget() - forward * maxAllowedVelocity * getDeltaTime() );
+        setPosTarget( getPosTarget() - joystickS.getAverage() * maxAllowedVelocity * getDeltaTime() );
     }
     public void setTARGET_LOOP_MS(double targetLoopMs) {TARGET_LOOP_MS = targetLoopMs;}
     public double getDeltaTime() {return deltaTime;}
@@ -385,4 +398,5 @@ public class TwoWheelBalanceController {
     public void setMaxAllowedVelocity(double maxVelo) {
         maxAllowedVelocity = maxVelo;}
     public double getMaxAllowedVelocity() {return maxAllowedVelocity;}
+    public double getMaxAllowedAccel() {return maxAllowedAccel;}
 }

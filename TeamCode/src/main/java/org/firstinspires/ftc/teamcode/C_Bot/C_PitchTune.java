@@ -66,6 +66,7 @@ public class C_PitchTune extends OpMode {
      */
     @Override
     public void loop() {
+        twb.startCycleTImer();
         if (gamepad1.dpadUpWasPressed()) pitchFuzz += 0.1;
         else if (gamepad1.dpadDownWasPressed()) pitchFuzz -= 0.1;
         twb.setZeroPitchTarget(pitchFuzz);

@@ -150,7 +150,5 @@ public class MoveProfiles {
      * @param time = time to travel the distance
      * @return = the maximum velocity reached during the travel
      */
-    public double getMaxVelocity(double distance, double time) {
-        return 2.0*distance / time;
-    }
+    //public double getMaxVelocity(double distance, double time) {return 2.0*distance / time;  }
 }

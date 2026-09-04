@@ -57,7 +57,7 @@ public class C_BackNForth_DOE extends OpMode {
         twb.writeDatalog("C_DOE_bnf_Full"); // This log will be bigger
 
         // MODIFY THESE FOR THE EXPERIMENTS.
-        term1 = new Term(0.011,0.015,5,twb.getKpos());  // Kpos
+        term1 = new Term(0.012,0.016,5,twb.getKpos());  // Kpos
 
         //term2 = new Term(0.0024,0.0025,2,twb.getKvelo()); // Kvelo
         term2 = new Term(0.20,0.22,3,twb.getKpitch()); // Kpitch
@@ -102,14 +102,12 @@ public class C_BackNForth_DOE extends OpMode {
     @Override
     @SuppressLint("DefaultLocale")
     public void loop() {
+        twb.startCycleTImer();
         if (moveTimer.seconds() < 0.03) {
             // set the new DOE K terms
             twb.setKpos(-term1.getCurrent());
             //twb.setKvelo(-term2.getCurrent());
             twb.setKpitch(-term2.getCurrent());
-
-            //twb.setMMPLoop(term1.getCurrent());
-            //twb.setDEGPLoop(term2.getCurrent());
 
             if (forward) {
                 virtualJoystick = -1.0;

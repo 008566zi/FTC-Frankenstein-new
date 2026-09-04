@@ -15,17 +15,12 @@ public class C_Tele extends OpMode
     // Declare OpMode members.
     private C_TWB twb;
 
-    private RunningAverageArray joystickS; // to smooth aggressive joystick inputs
-
-
     /**
      * run ONCE when the driver hits INIT
      */
     @Override
     public void init() {
         twb = new C_TWB(hardwareMap); // Create twb object
-
-        joystickS = new RunningAverageArray(12,false); // initialize size of running average
 
         twb.init();
     }
@@ -56,21 +51,17 @@ public class C_Tele extends OpMode
     @Override
     public void loop() {
 
+        twb.startCycleTImer();
+
         if (gamepad1.rightBumperWasPressed()) twb.collectFlywheel();
-        //if (gamepad1.y) twb.shootFlywheel();
+        if (gamepad1.y) twb.shootFlywheel();
         if (gamepad1.leftBumperWasReleased()) twb.flywheelOff();
 
         // allow for variation of the max velocity
         twb.setMaxSpeedGamepad(this);
 
-        // Use running average of the joystick to smooth aggressive inputs.
-        joystickS.add(gamepad1.left_stick_y);
-
-        // The left trigger is a speed booster
-        //joystickS.add(gamepad1.left_stick_y * (1 + gamepad1.left_trigger/2.0));
-
-        // Translate the robot by setting position, velocity and pitch targets
-        twb.translateDrive(joystickS.getAverage());
+        // Translate the robot
+        twb.translateDrive(gamepad1.left_stick_y);
 
         // Either joystick can turn the robot.  Different speeds. Sets yaw target
         twb.turn_teleop(-gamepad1.left_stick_x * 0.03);
