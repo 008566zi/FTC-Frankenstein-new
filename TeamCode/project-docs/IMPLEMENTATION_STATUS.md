@@ -17,7 +17,9 @@ PVI-FTC | Editable master guide
   rumble events at custom elapsed-time thresholds without touching the built-in 90 s / 105 s /
   115 s defaults. `rumbleNow(int durationMs)` fires an immediate rumble on the gamepad at the
   moment it is called, usable anywhere in a TeleOp `loop()`. Both methods are documented with
-  Javadoc and usage examples. Only `RumbleManager.java` was modified; no other files changed.
+  Javadoc and usage examples. Updated `ARCHITECTURE.md` to document `core.util.RumbleManager` and
+  clarify that direct gamepad access is permitted for feedback/haptic outputs while control input
+  must strictly flow through `InputManager`.
   `TeamCode:assembleDebug` passed with `BUILD SUCCESSFUL` (52 tasks, 0 errors). Architecture
   boundaries are preserved: `RumbleManager` still holds only a `Gamepad` reference and contains
   no hardware map, FSM, subsystem, or autonomous logic.
