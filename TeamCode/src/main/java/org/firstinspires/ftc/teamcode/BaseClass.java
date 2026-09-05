@@ -1,12 +1,25 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import java.util.List;
+
 public abstract class BaseClass extends LinearOpMode {
 
     // Globally Declared Sensors
-    public IMU gyro;
+    //public IMU gyro;
 
-    // Module Classes
-    public Drive driveModule = null; // This is an actual class with various methods
+    // Drivetrain Motors
+    protected DcMotor backLeftMotor = null;
+    protected DcMotor backRightMotor = null;
+    protected DcMotor frontLeftMotor = null;
+    protected DcMotor frontRightMotor = null;
 
     // Global Variables
+    public ElapsedTime matchTime = new ElapsedTime();
     public int exampleVariable = 0;
 
     // Initialize Hardware Function
@@ -18,41 +31,17 @@ public abstract class BaseClass extends LinearOpMode {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        // Motors
-        /* DcMotor armMotor = hardwareMap.get(DcMotor.class, "Drive Motor");
-        armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION); */
-
         // Drivetrain
-        DcMotor backLeftMotor = hardwareMap.get(DcMotor.class), "Drive Motor");
-        backLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        DcMotor backRightMotor = hardwareMap.get(DcMotor.class), "Drive Motor");
-        backRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backRightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        DcMotor frontLeftMotor = hardwareMap.get(DcMotor.class), "Drive Motor");
-        frontLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        DcMotor frontRightMotor = hardwareMap.get(DcMotor.class), "Drive Motor");
-        frontRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontRightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // Init Module class
-        //armModule = new Arm(armMotor);
-
-        //Drivetrain
-        driveModule = new Drive(backLeftMotor,backRightMotor,frontLeftMotor,frontRightMotor);
+        backLeftMotor = hardwareMap.get(DcMotor.class, "backLeftMotor");
+        backRightMotor = hardwareMap.get(DcMotor.class, "backRightMotor");
+        frontLeftMotor = hardwareMap.get(DcMotor.class, "frontLeftMotor");
+        frontRightMotor = hardwareMap.get(DcMotor.class, "frontRightMotor");
     }
 
-    //Utility Functions
+    /* //Utility Functions
     public String formatDegrees(double degrees) {
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
-    }
+    } */
 
     // Allows you to connect opModes to the base class
     @Override
